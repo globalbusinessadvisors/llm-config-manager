@@ -1,0 +1,118 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run security scan daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  security-scan:
+    name: Security Code Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build devtools
+        run: cargo build --package llm-config-devtools --bins
+
+      - name: Run security scan (SARIF)
+        run: |
+          cargo run --bin llm-security-scan -- \
+            --format sarif \
+            --output results.sarif
+        continue-on-error: true
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+          category: llm-security-scan
+
+      - name: Run security scan (Markdown)
+        run: |
+          cargo run --bin llm-security-scan -- \
+            --format markdown \
+            --output security-report.md
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-report
+          path: security-report.md
+
+      - name: Run security scan (fail on high)
+        run: |
+          cargo run --bin llm-security-scan -- \
+            --fail-on-high
+
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Build devtools
+        run: cargo build --package llm-config-devtools --bins
+
+      - name: Run dependency scan
+        run: |
+          cargo run --bin llm-dependency-scan -- \
+            --fail-on-vulnerabilities
+
+      - name: Check for outdated dependencies
+        run: |
+          cargo install cargo-outdated || true
+          cargo run --bin llm-dependency-scan -- \
+            --check-outdated \
+            --fail-on-vulnerabilities=false
+        continue-on-error: true

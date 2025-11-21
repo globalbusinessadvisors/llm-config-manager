@@ -67,26 +67,26 @@ Tests Role-Based Access Control performance:
 
 ## Running Benchmarks
 
-### Quick Start
+### Quick Start with Cargo Aliases
 
 Run all benchmarks:
 ```bash
-./benchmarks.sh
+cargo bench-all
 ```
 
 Run specific benchmark suites:
 ```bash
-./benchmarks.sh core      # Core configuration operations
-./benchmarks.sh cache     # Cache performance
-./benchmarks.sh crypto    # Cryptographic operations
-./benchmarks.sh rbac      # RBAC permission checks
+cargo bench-core      # Core configuration operations
+cargo bench-cache     # Cache performance
+cargo bench-crypto    # Cryptographic operations
+cargo bench-rbac      # RBAC permission checks
 ```
 
 ### Using Cargo Directly
 
 Run all benchmarks:
 ```bash
-cargo bench
+cargo bench --workspace
 ```
 
 Run benchmarks for a specific crate:

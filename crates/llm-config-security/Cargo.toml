@@ -46,6 +46,6 @@ tokio-test = "0.4"
 criterion = "0.5"
 proptest = "1.4"
 
-[[bench]]
-name = "security_benchmarks"
-harness = false
+# [[bench]]
+# name = "security_benchmarks"
+# harness = false

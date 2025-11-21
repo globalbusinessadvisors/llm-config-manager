@@ -1,0 +1,23 @@
+# Cargo configuration for LLM Config Manager
+
+[alias]
+# Security scanning
+security-scan = "run --bin llm-security-scan --"
+sec-scan = "run --bin llm-security-scan --"
+
+# Dependency scanning
+dependency-scan = "run --bin llm-dependency-scan --"
+dep-scan = "run --bin llm-dependency-scan --"
+
+# Benchmark shortcuts
+bench-all = "bench --workspace"
+bench-core = "bench --package llm-config-core"
+bench-cache = "bench --package llm-config-cache"
+bench-crypto = "bench --package llm-config-crypto"
+bench-rbac = "bench --package llm-config-rbac"
+
+# Quick security scan with SARIF output for GitHub
+sec-github = "run --bin llm-security-scan -- --format sarif --output results.sarif --fail-on-high"
+
+# Full security suite
+sec-full = "run --bin llm-security-scan -- --format markdown --output security-report.md"

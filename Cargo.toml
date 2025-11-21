@@ -12,7 +12,7 @@ members = [
     "crates/llm-config-templates",
     "crates/llm-config-metrics",
     "crates/llm-config-security",
-    "crates/llm-config-integration-tests",
+    "crates/llm-config-integration-tests", "crates/llm-config-devtools",
 ]
 
 [workspace.package]
