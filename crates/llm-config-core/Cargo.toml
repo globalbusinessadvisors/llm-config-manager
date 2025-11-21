@@ -13,8 +13,8 @@ keywords = ["config", "configuration", "management", "llm", "environment"]
 categories = ["config", "development-tools"]
 
 [dependencies]
-llm-config-crypto = { path = "../llm-config-crypto" }
-llm-config-storage = { path = "../llm-config-storage" }
+llm-config-crypto = { version = "0.5.0", path = "../llm-config-crypto" }
+llm-config-storage = { version = "0.5.0", path = "../llm-config-storage" }
 tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
