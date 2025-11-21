@@ -1,0 +1,19 @@
+[package]
+name = "llm-config-integration-tests"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+llm-config-core = { path = "../llm-config-core" }
+llm-config-crypto = { path = "../llm-config-crypto" }
+llm-config-audit = { path = "../llm-config-audit" }
+llm-config-rbac = { path = "../llm-config-rbac" }
+llm-config-cache = { path = "../llm-config-cache" }
+llm-config-templates = { path = "../llm-config-templates" }
+tokio = { workspace = true }
+tempfile = { workspace = true }
+chrono = { workspace = true }

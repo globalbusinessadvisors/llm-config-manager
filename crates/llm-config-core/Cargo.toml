@@ -1,0 +1,31 @@
+[package]
+name = "llm-config-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+llm-config-crypto = { path = "../llm-config-crypto" }
+llm-config-storage = { path = "../llm-config-storage" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+toml = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+mockall = { workspace = true }
+tempfile = "3.8"
+criterion = { workspace = true }
+
+[[bench]]
+name = "core_benchmarks"
+harness = false

@@ -1,0 +1,81 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/llm-config-core",
+    "crates/llm-config-cli",
+    "crates/llm-config-api",
+    "crates/llm-config-storage",
+    "crates/llm-config-crypto",
+    "crates/llm-config-audit",
+    "crates/llm-config-rbac",
+    "crates/llm-config-cache",
+    "crates/llm-config-templates",
+    "crates/llm-config-metrics",
+    "crates/llm-config-integration-tests",
+]
+
+[workspace.package]
+version = "0.5.0"
+edition = "2021"
+rust-version = "1.75"
+authors = ["LLM DevOps Team"]
+license = "Apache-2.0"
+repository = "https://github.com/llm-devops/llm-config-manager"
+
+[workspace.dependencies]
+# Core dependencies
+tokio = { version = "1.35", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+toml = "0.8"
+anyhow = "1.0"
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# Cryptography
+ring = "0.17"
+chacha20poly1305 = "0.10"
+argon2 = "0.5"
+zeroize = { version = "1.7", features = ["derive"] }
+
+# CLI
+clap = { version = "4.5", features = ["derive", "cargo", "env"] }
+
+# HTTP/API
+axum = "0.7"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["full"] }
+hyper = "1.0"
+
+# Storage
+sled = "0.34"
+
+# Utilities
+uuid = { version = "1.6", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+hex = "0.4"
+base64 = "0.21"
+
+# Testing
+proptest = "1.4"
+criterion = "0.5"
+mockall = "0.12"
+tempfile = "3.8"
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+[profile.test]
+opt-level = 1
+
+[profile.bench]
+opt-level = 3

@@ -1,0 +1,128 @@
+# Staging Configuration for LLM Config Manager
+# This configuration mirrors production but with relaxed settings for testing.
+
+# Server Configuration
+server:
+  host: "0.0.0.0"
+  port: 8080
+  workers: 2
+  max_connections: 500
+  timeout_seconds: 30
+  enable_tls: true
+  tls_cert_path: "/etc/llm-config/certs/server.crt"
+  tls_key_path: "/etc/llm-config/certs/server.key"
+
+# Storage Configuration
+storage:
+  type: "file"
+  path: "/var/lib/llm-config/data"
+  backup_enabled: true
+  backup_path: "/var/lib/llm-config/backups"
+  backup_retention_days: 7
+  max_file_size_mb: 100
+
+# Encryption Configuration
+encryption:
+  algorithm: "aes-256-gcm"
+  key_rotation_enabled: true
+  key_rotation_days: 30  # More frequent for testing
+
+# Cache Configuration
+cache:
+  l1:
+    enabled: true
+    max_size: 500
+    ttl_seconds: 300
+  l2:
+    enabled: true
+    path: "/var/lib/llm-config/cache"
+    max_size_mb: 250
+    ttl_seconds: 3600
+
+# Audit Logging
+audit:
+  enabled: true
+  log_path: "/var/log/llm-config/audit"
+  retention_days: 30
+  format: "json"
+  log_level: "debug"  # More verbose for testing
+  include_read_operations: true
+  sensitive_fields_redacted: true
+
+# RBAC Configuration
+rbac:
+  enabled: true
+  default_role: "editor"  # More permissive for testing
+  allow_self_service: false
+  require_mfa_for_admin: false  # Disabled for easier testing
+  session_timeout_minutes: 120
+
+# Rate Limiting
+rate_limit:
+  enabled: true
+  requests_per_minute: 500
+  burst_size: 50
+  per_user_limit: true
+
+# Monitoring & Metrics
+monitoring:
+  enabled: true
+  metrics_port: 9090
+  metrics_path: "/metrics"
+  health_check_path: "/health"
+  profiling_enabled: true  # Enable for performance testing
+
+# Logging
+logging:
+  level: "debug"
+  format: "json"
+  output: "file"
+  file_path: "/var/log/llm-config/application.log"
+  rotation:
+    enabled: true
+    max_size_mb: 50
+    max_backups: 5
+    compress: true
+
+# API Configuration
+api:
+  enable_cors: true  # May need CORS for testing
+  cors_origins: ["https://staging.example.com"]
+  api_key_required: true
+  jwt_enabled: true
+  jwt_secret_path: "/etc/llm-config/secrets/jwt.secret"
+  jwt_expiration_hours: 8  # Shorter for testing
+
+# Feature Flags
+features:
+  template_engine: true
+  version_control: true
+  config_export: true
+  config_import: true
+  bulk_operations: true  # Enable for testing
+  graphql_api: true
+
+# Security
+security:
+  allowed_namespaces: []
+  forbidden_keys: ["password", "secret", "token", "api_key"]
+  max_config_size_kb: 1024
+  require_https: true
+  hsts_enabled: true
+  csp_enabled: true
+
+# Environment
+environment: "staging"
+
+# Notifications
+notifications:
+  enabled: true  # Test notifications in staging
+  email:
+    smtp_host: "smtp.example.com"
+    smtp_port: 587
+    from_address: "llm-config-staging@example.com"
+    admin_recipients: ["staging-admin@example.com"]
+  events:
+    - "config_deleted"
+    - "secret_accessed"
+    - "permission_denied"

@@ -1,0 +1,252 @@
+{
+  "dashboard": {
+    "title": "LLM Config Manager - Overview",
+    "description": "High-level overview of LLM Config Manager system health and performance",
+    "tags": ["llm-config", "overview"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "System Status",
+        "type": "stat",
+        "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "up{job=\"llm-config-manager\"}",
+            "legendFormat": "Status"
+          }
+        ],
+        "options": {
+          "graphMode": "none",
+          "colorMode": "background",
+          "justifyMode": "center",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {
+                "type": "value",
+                "options": {
+                  "0": { "text": "DOWN", "color": "red" },
+                  "1": { "text": "UP", "color": "green" }
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Uptime",
+        "type": "stat",
+        "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "system_uptime_seconds",
+            "legendFormat": "Uptime"
+          }
+        ],
+        "options": {
+          "unit": "s"
+        }
+      },
+      {
+        "id": 3,
+        "title": "Request Rate",
+        "type": "stat",
+        "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total[5m]))",
+            "legendFormat": "Requests/sec"
+          }
+        ],
+        "options": {
+          "unit": "reqps"
+        }
+      },
+      {
+        "id": 4,
+        "title": "Error Rate",
+        "type": "stat",
+        "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(rate(config_errors_total[5m])) / sum(rate(config_operations_total[5m]))",
+            "legendFormat": "Error Rate"
+          }
+        ],
+        "options": {
+          "unit": "percentunit",
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 0.01, "color": "yellow" },
+              { "value": 0.05, "color": "red" }
+            ]
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Requests Per Second",
+        "type": "graph",
+        "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total[5m])) by (method)",
+            "legendFormat": "{{method}}"
+          }
+        ],
+        "yaxes": [
+          { "label": "requests/sec", "format": "reqps" },
+          { "show": false }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "P95 Latency",
+        "type": "graph",
+        "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, path))",
+            "legendFormat": "{{path}}"
+          }
+        ],
+        "yaxes": [
+          { "label": "latency", "format": "s" },
+          { "show": false }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Cache Hit Rate",
+        "type": "graph",
+        "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(rate(cache_hits_total[5m])) by (tier) / (sum(rate(cache_hits_total[5m])) by (tier) + sum(rate(cache_misses_total[5m])) by (tier))",
+            "legendFormat": "{{tier}}"
+          }
+        ],
+        "yaxes": [
+          { "label": "hit rate", "format": "percentunit", "min": 0, "max": 1 },
+          { "show": false }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Active Configurations",
+        "type": "graph",
+        "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(config_active_total) by (environment)",
+            "legendFormat": "{{environment}}"
+          }
+        ],
+        "yaxes": [
+          { "label": "count", "format": "short" },
+          { "show": false }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Operations by Type",
+        "type": "piechart",
+        "gridPos": { "x": 0, "y": 20, "w": 8, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(increase(config_operations_total[1h])) by (operation)",
+            "legendFormat": "{{operation}}"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Permission Checks",
+        "type": "stat",
+        "gridPos": { "x": 8, "y": 20, "w": 8, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(rate(rbac_permission_checks_total[5m]))",
+            "legendFormat": "Checks/sec"
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Permission Denial Rate",
+        "type": "stat",
+        "gridPos": { "x": 16, "y": 20, "w": 8, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(rate(rbac_permission_denials_total[5m])) / sum(rate(rbac_permission_checks_total[5m]))",
+            "legendFormat": "Denial Rate"
+          }
+        ],
+        "options": {
+          "unit": "percentunit",
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 0.1, "color": "yellow" },
+              { "value": 0.2, "color": "red" }
+            ]
+          }
+        }
+      },
+      {
+        "id": 12,
+        "title": "Audit Events",
+        "type": "graph",
+        "gridPos": { "x": 8, "y": 24, "w": 16, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(rate(audit_events_total[5m])) by (event_type)",
+            "legendFormat": "{{event_type}}"
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "title": "Storage Size",
+        "type": "graph",
+        "gridPos": { "x": 0, "y": 28, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "storage_size_bytes",
+            "legendFormat": "Storage"
+          }
+        ],
+        "yaxes": [
+          { "label": "bytes", "format": "bytes" },
+          { "show": false }
+        ]
+      },
+      {
+        "id": 14,
+        "title": "Memory Usage",
+        "type": "graph",
+        "gridPos": { "x": 12, "y": 28, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "system_memory_usage_bytes",
+            "legendFormat": "Memory"
+          }
+        ],
+        "yaxes": [
+          { "label": "bytes", "format": "bytes" },
+          { "show": false }
+        ]
+      }
+    ]
+  }
+}

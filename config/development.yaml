@@ -1,0 +1,107 @@
+# Development Configuration for LLM Config Manager
+# This configuration is optimized for local development.
+
+# Server Configuration
+server:
+  host: "127.0.0.1"
+  port: 8080
+  workers: 2
+  max_connections: 100
+  timeout_seconds: 60
+  enable_tls: false  # Disable TLS for easier local development
+
+# Storage Configuration
+storage:
+  type: "file"
+  path: "./data/dev"
+  backup_enabled: false
+  max_file_size_mb: 10
+
+# Encryption Configuration
+encryption:
+  algorithm: "aes-256-gcm"
+  key_rotation_enabled: false
+  # Dev key (DO NOT use in production)
+  # Generate with: openssl rand -hex 32
+
+# Cache Configuration
+cache:
+  l1:
+    enabled: true
+    max_size: 100
+    ttl_seconds: 60
+  l2:
+    enabled: true
+    path: "./data/dev/cache"
+    max_size_mb: 50
+    ttl_seconds: 300
+
+# Audit Logging
+audit:
+  enabled: true
+  log_path: "./logs/audit"
+  retention_days: 7
+  format: "text"  # Text format is easier to read during development
+  log_level: "debug"
+  include_read_operations: true
+  sensitive_fields_redacted: false
+
+# RBAC Configuration
+rbac:
+  enabled: true
+  default_role: "admin"  # Admin by default for ease of development
+  allow_self_service: true
+  require_mfa_for_admin: false
+  session_timeout_minutes: 480  # 8 hours
+
+# Rate Limiting
+rate_limit:
+  enabled: false  # Disable for development
+
+# Monitoring & Metrics
+monitoring:
+  enabled: true
+  metrics_port: 9090
+  metrics_path: "/metrics"
+  health_check_path: "/health"
+  profiling_enabled: true  # Enable profiling for debugging
+
+# Logging
+logging:
+  level: "debug"
+  format: "pretty"  # Pretty format for easier reading
+  output: "stdout"
+  rotation:
+    enabled: false
+
+# API Configuration
+api:
+  enable_cors: true  # Enable CORS for frontend development
+  cors_origins: ["http://localhost:3000", "http://localhost:8080"]
+  api_key_required: false  # Disable for easier development
+  jwt_enabled: false
+
+# Feature Flags
+features:
+  template_engine: true
+  version_control: true
+  config_export: true
+  config_import: true
+  bulk_operations: true
+  graphql_api: true
+
+# Security
+security:
+  allowed_namespaces: []
+  forbidden_keys: []  # Allow all keys in development
+  max_config_size_kb: 10240  # 10MB for testing
+  require_https: false
+  hsts_enabled: false
+  csp_enabled: false
+
+# Environment
+environment: "development"
+
+# Notifications
+notifications:
+  enabled: false

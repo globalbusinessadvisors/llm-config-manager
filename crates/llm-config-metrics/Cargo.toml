@@ -1,0 +1,21 @@
+[package]
+name = "llm-config-metrics"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+prometheus = "0.13"
+lazy_static = "1.4"
+async-trait = "0.1"
+tokio = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

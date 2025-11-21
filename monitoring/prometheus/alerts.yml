@@ -1,0 +1,292 @@
+# Prometheus Alert Rules for LLM Config Manager
+#
+# Load these rules in Prometheus configuration:
+# rule_files:
+#   - "alerts.yml"
+
+groups:
+  - name: llm_config_critical
+    interval: 30s
+    rules:
+      # Service availability
+      - alert: ServiceDown
+        expr: up{job="llm-config-manager"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: "LLM Config Manager service is down"
+          description: "The LLM Config Manager service has been down for more than 1 minute."
+          runbook: "https://docs.example.com/runbooks/service-down"
+
+      # Critical error rate
+      - alert: CriticalErrorRate
+        expr: |
+          sum(rate(config_errors_total[5m])) /
+          sum(rate(config_operations_total[5m])) > 0.10
+        for: 5m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "Critical error rate detected (> 10%)"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+          runbook: "https://docs.example.com/runbooks/high-error-rate"
+
+      # Storage failure
+      - alert: StorageFailure
+        expr: rate(storage_errors_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+          component: storage
+        annotations:
+          summary: "Storage errors detected"
+          description: "Storage is experiencing {{ $value | humanize }} errors per second."
+          runbook: "https://docs.example.com/runbooks/storage-failure"
+
+  - name: llm_config_warnings
+    interval: 30s
+    rules:
+      # High error rate
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(config_errors_total[5m])) /
+          sum(rate(config_operations_total[5m])) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "Elevated error rate detected (> 5%)"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 10 minutes."
+          runbook: "https://docs.example.com/runbooks/elevated-errors"
+
+      # High latency
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            rate(config_operation_duration_seconds_bucket[5m])
+          ) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: performance
+        annotations:
+          summary: "P95 latency above 100ms"
+          description: "P95 latency is {{ $value }}s for the last 10 minutes."
+          runbook: "https://docs.example.com/runbooks/high-latency"
+
+      # Low cache hit rate
+      - alert: LowCacheHitRate
+        expr: |
+          sum(rate(cache_hits_total{tier="l1"}[5m])) /
+          (sum(rate(cache_hits_total{tier="l1"}[5m])) +
+           sum(rate(cache_misses_total{tier="l1"}[5m]))) < 0.70
+        for: 15m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "L1 cache hit rate below 70%"
+          description: "L1 cache hit rate is {{ $value | humanizePercentage }}. Consider increasing cache size or TTL."
+          runbook: "https://docs.example.com/runbooks/cache-performance"
+
+      # Storage near capacity
+      - alert: StorageNearCapacity
+        expr: storage_size_bytes > 80e9  # 80GB
+        for: 30m
+        labels:
+          severity: warning
+          component: storage
+        annotations:
+          summary: "Storage usage above 80GB"
+          description: "Current storage size is {{ $value | humanize1024 }}B. Consider cleanup or expansion."
+          runbook: "https://docs.example.com/runbooks/storage-capacity"
+
+      # High permission denial rate
+      - alert: HighPermissionDenialRate
+        expr: |
+          sum(rate(rbac_permission_denials_total[5m])) /
+          sum(rate(rbac_permission_checks_total[5m])) > 0.20
+        for: 15m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "High permission denial rate (> 20%)"
+          description: "Permission denial rate is {{ $value | humanizePercentage }}. Check for misconfigured roles or unauthorized access attempts."
+          runbook: "https://docs.example.com/runbooks/rbac-denials"
+
+      # Audit queue backing up
+      - alert: AuditQueueBackup
+        expr: audit_queue_size > 10000
+        for: 10m
+        labels:
+          severity: warning
+          component: audit
+        annotations:
+          summary: "Audit event queue is backing up"
+          description: "Audit queue size is {{ $value }}. Events may be delayed."
+          runbook: "https://docs.example.com/runbooks/audit-queue"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: system_memory_usage_bytes > 8e9  # 8GB
+        for: 15m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "Memory usage above 8GB"
+          description: "Current memory usage is {{ $value | humanize1024 }}B."
+          runbook: "https://docs.example.com/runbooks/memory-usage"
+
+  - name: llm_config_performance
+    interval: 1m
+    rules:
+      # Slow operations
+      - alert: SlowConfigOperations
+        expr: |
+          histogram_quantile(0.99,
+            rate(config_operation_duration_seconds_bucket{operation="set"}[5m])
+          ) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: performance
+        annotations:
+          summary: "Config set operations are slow"
+          description: "P99 latency for set operations is {{ $value }}s."
+          runbook: "https://docs.example.com/runbooks/slow-operations"
+
+      # Cache eviction rate high
+      - alert: HighCacheEvictionRate
+        expr: rate(cache_evictions_total[5m]) > 100
+        for: 10m
+        labels:
+          severity: info
+          component: cache
+        annotations:
+          summary: "High cache eviction rate"
+          description: "Cache is evicting {{ $value }} entries per second. Consider increasing cache size."
+          runbook: "https://docs.example.com/runbooks/cache-evictions"
+
+      # Crypto operation latency
+      - alert: SlowCryptoOperations
+        expr: |
+          histogram_quantile(0.95,
+            rate(crypto_operation_duration_seconds_bucket[5m])
+          ) > 0.01
+        for: 15m
+        labels:
+          severity: warning
+          component: crypto
+        annotations:
+          summary: "Crypto operations are slow"
+          description: "P95 crypto latency is {{ $value }}s (> 10ms)."
+          runbook: "https://docs.example.com/runbooks/crypto-performance"
+
+  - name: llm_config_security
+    interval: 1m
+    rules:
+      # Encryption failures
+      - alert: EncryptionFailures
+        expr: rate(crypto_encryption_errors_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: security
+        annotations:
+          summary: "Encryption failures detected"
+          description: "Experiencing {{ $value }} encryption errors per second."
+          runbook: "https://docs.example.com/runbooks/encryption-failures"
+
+      # Unusual access patterns
+      - alert: UnusualAccessPattern
+        expr: |
+          sum(rate(config_operations_total[5m])) >
+          (sum(avg_over_time(config_operations_total[1h])) * 3)
+        for: 10m
+        labels:
+          severity: info
+          component: security
+        annotations:
+          summary: "Unusual access pattern detected"
+          description: "Request rate is {{ $value }}x higher than average."
+          runbook: "https://docs.example.com/runbooks/unusual-access"
+
+      # Excessive secret access
+      - alert: ExcessiveSecretAccess
+        expr: |
+          sum(rate(audit_events_total{event_type="secret_accessed"}[5m])) > 50
+        for: 10m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "High rate of secret access"
+          description: "Secrets are being accessed {{ $value }} times per second."
+          runbook: "https://docs.example.com/runbooks/secret-access"
+
+  - name: llm_config_capacity
+    interval: 5m
+    rules:
+      # Storage growth rate
+      - alert: HighStorageGrowthRate
+        expr: |
+          deriv(storage_size_bytes[1h]) * 3600 * 24 > 10e9  # 10GB per day
+        for: 1h
+        labels:
+          severity: info
+          component: capacity
+        annotations:
+          summary: "High storage growth rate"
+          description: "Storage is growing at {{ $value | humanize1024 }}B per day."
+          runbook: "https://docs.example.com/runbooks/storage-growth"
+
+      # Configuration count growth
+      - alert: HighConfigurationGrowth
+        expr: |
+          deriv(sum(config_active_total)[1h]) * 3600 * 24 > 10000
+        for: 2h
+        labels:
+          severity: info
+          component: capacity
+        annotations:
+          summary: "High configuration growth rate"
+          description: "Configurations are growing by {{ $value }} per day."
+          runbook: "https://docs.example.com/runbooks/config-growth"
+
+  - name: llm_config_sla
+    interval: 5m
+    rules:
+      # SLA: 99.9% availability
+      - alert: SLAViolation_Availability
+        expr: |
+          (sum(rate(http_requests_total{status!~"5.."}[5m])) /
+           sum(rate(http_requests_total[5m]))) < 0.999
+        for: 15m
+        labels:
+          severity: critical
+          component: sla
+        annotations:
+          summary: "SLA violation: Availability below 99.9%"
+          description: "Current availability is {{ $value | humanizePercentage }}."
+          runbook: "https://docs.example.com/runbooks/sla-availability"
+
+      # SLA: P95 latency < 100ms
+      - alert: SLAViolation_Latency
+        expr: |
+          histogram_quantile(0.95,
+            rate(http_request_duration_seconds_bucket[5m])
+          ) > 0.1
+        for: 15m
+        labels:
+          severity: warning
+          component: sla
+        annotations:
+          summary: "SLA warning: P95 latency above 100ms"
+          description: "Current P95 latency is {{ $value }}s."
+          runbook: "https://docs.example.com/runbooks/sla-latency"

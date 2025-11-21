@@ -1,0 +1,32 @@
+# Rust
+target/
+Cargo.lock
+
+# Node
+node_modules/
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Build artifacts
+*.o
+*.so
+*.dylib
+*.dll
+
+# Test artifacts
+*.profraw
+*.profdata

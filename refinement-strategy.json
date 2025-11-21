@@ -1,0 +1,1747 @@
+{
+  "refinement": {
+    "metadata": {
+      "version": "1.0.0",
+      "methodology": "SPARC",
+      "phase": "Refinement",
+      "target": "LLM-Config-Manager",
+      "ecosystem": "LLM DevOps",
+      "created": "2025-11-21",
+      "compliance_targets": ["SOC2", "ISO27001", "GDPR", "NIST-800-53"]
+    },
+    "testing_strategy": {
+      "unit_testing": {
+        "framework": "cargo test",
+        "coverage_target": ">=85%",
+        "approach": {
+          "test_organization": {
+            "inline_tests": "Simple unit tests in same file as implementation",
+            "test_modules": "Complex test suites in tests/ directory",
+            "naming_convention": "test_<functionality>_<scenario>_<expected_result>"
+          },
+          "property_based_testing": {
+            "framework": "proptest",
+            "use_cases": [
+              "Configuration schema validation across random inputs",
+              "Secret encryption/decryption round-trip verification",
+              "Access control policy evaluation consistency",
+              "Multi-tenant isolation boundary testing"
+            ],
+            "strategies": {
+              "config_generation": "Generate valid and invalid configurations to test parser robustness",
+              "secret_generation": "Test encryption with various secret sizes and character sets",
+              "policy_generation": "Generate random RBAC policies to test authorization logic"
+            }
+          },
+          "test_categories": [
+            {
+              "category": "Configuration Management",
+              "tests": [
+                "test_config_parse_valid_json",
+                "test_config_parse_invalid_schema",
+                "test_config_merge_strategies",
+                "test_config_version_compatibility",
+                "test_config_hot_reload"
+              ]
+            },
+            {
+              "category": "Secret Management",
+              "tests": [
+                "test_secret_encryption_aes256gcm",
+                "test_secret_decryption_with_rotation",
+                "test_secret_zero_memory_on_drop",
+                "test_secret_strength_validation",
+                "test_secret_expiration_handling"
+              ]
+            },
+            {
+              "category": "Backend Integration",
+              "tests": [
+                "test_vault_client_connection",
+                "test_aws_secrets_manager_fetch",
+                "test_gcp_secret_manager_store",
+                "test_azure_keyvault_rotation",
+                "test_backend_failover_logic"
+              ]
+            },
+            {
+              "category": "Access Control",
+              "tests": [
+                "test_rbac_policy_evaluation",
+                "test_abac_attribute_matching",
+                "test_tenant_isolation",
+                "test_permission_inheritance",
+                "test_policy_cache_invalidation"
+              ]
+            }
+          ]
+        },
+        "mocking": {
+          "framework": "mockall",
+          "mock_targets": [
+            "Backend storage clients (Vault, AWS, GCP, Azure)",
+            "HTTP clients for API calls",
+            "Database connections",
+            "Cryptographic operations for deterministic testing",
+            "Time-dependent operations (expiration, rotation)"
+          ]
+        },
+        "test_fixtures": {
+          "location": "tests/fixtures/",
+          "types": [
+            "sample_configs.json",
+            "invalid_schemas.json",
+            "rbac_policies.yaml",
+            "test_certificates.pem",
+            "mock_secrets.enc"
+          ]
+        }
+      },
+      "integration_testing": {
+        "framework": "cargo test --test integration",
+        "approach": {
+          "test_environments": [
+            {
+              "name": "LocalBackend",
+              "description": "File-based storage for CI/CD",
+              "setup": "Initialize in-memory SQLite + file system"
+            },
+            {
+              "name": "VaultDev",
+              "description": "HashiCorp Vault in dev mode",
+              "setup": "Docker container with vault server -dev"
+            },
+            {
+              "name": "LocalStackAWS",
+              "description": "AWS services emulation",
+              "setup": "LocalStack container for Secrets Manager + KMS"
+            }
+          ],
+          "test_scenarios": [
+            {
+              "scenario": "Multi-Backend Failover",
+              "steps": [
+                "Configure primary backend (Vault) and secondary (AWS)",
+                "Store secret in primary",
+                "Simulate primary failure",
+                "Verify automatic failover to secondary",
+                "Verify data consistency"
+              ]
+            },
+            {
+              "scenario": "Secret Rotation Workflow",
+              "steps": [
+                "Store secret with expiration",
+                "Trigger rotation before expiration",
+                "Verify both old and new secrets valid during grace period",
+                "Verify old secret invalidated after grace period"
+              ]
+            },
+            {
+              "scenario": "Multi-Tenant Isolation",
+              "steps": [
+                "Create two tenant contexts",
+                "Store secrets for each tenant",
+                "Verify tenant A cannot access tenant B secrets",
+                "Verify audit logs show proper attribution"
+              ]
+            },
+            {
+              "scenario": "Configuration Hot Reload",
+              "steps": [
+                "Start service with config A",
+                "Update configuration file to config B",
+                "Send SIGHUP or trigger reload API",
+                "Verify new config active without restart",
+                "Verify in-flight requests complete with old config"
+              ]
+            }
+          ]
+        },
+        "docker_compose": {
+          "services": [
+            "vault:1.15.0",
+            "localstack/localstack:latest",
+            "postgres:15-alpine",
+            "redis:7-alpine"
+          ],
+          "health_checks": "Wait for all services healthy before tests"
+        }
+      },
+      "security_testing": {
+        "penetration_testing": {
+          "tools": [
+            "OWASP ZAP for API scanning",
+            "cargo-audit for dependency vulnerabilities",
+            "rustsec for advisory checks"
+          ],
+          "test_cases": [
+            {
+              "attack": "SQL Injection",
+              "target": "Configuration query parameters",
+              "mitigation": "Parameterized queries, input validation"
+            },
+            {
+              "attack": "Secrets Leakage in Logs",
+              "target": "Logging statements",
+              "mitigation": "Secret redaction, structured logging with filters"
+            },
+            {
+              "attack": "Timing Attacks",
+              "target": "Secret comparison operations",
+              "mitigation": "Constant-time comparison using subtle crate"
+            },
+            {
+              "attack": "Path Traversal",
+              "target": "File-based configuration loading",
+              "mitigation": "Path canonicalization, whitelist validation"
+            },
+            {
+              "attack": "Privilege Escalation",
+              "target": "RBAC policy evaluation",
+              "mitigation": "Deny-by-default, explicit grants only"
+            },
+            {
+              "attack": "Replay Attacks",
+              "target": "API authentication tokens",
+              "mitigation": "Token expiration, nonce validation"
+            }
+          ]
+        },
+        "secrets_leakage_prevention": {
+          "static_analysis": {
+            "tool": "cargo-clippy with custom lints",
+            "rules": [
+              "No secrets in string literals",
+              "No Debug trait on secret types",
+              "No logging of sensitive fields",
+              "Zeroize on secret drop"
+            ]
+          },
+          "runtime_checks": {
+            "log_scrubbing": "Regex-based redaction of patterns (API keys, tokens, passwords)",
+            "memory_protection": "Use secrecy crate for secret types, mlock for sensitive memory",
+            "error_messages": "Generic errors to external clients, detailed errors to audit log only"
+          },
+          "ci_cd_integration": {
+            "pre_commit": "git-secrets to scan commits for secrets",
+            "pr_checks": "truffleHog to scan diffs",
+            "container_scanning": "Trivy to scan images for embedded secrets"
+          }
+        },
+        "fuzzing": {
+          "framework": "cargo-fuzz with libFuzzer",
+          "targets": [
+            "Configuration parser (JSON, YAML, TOML)",
+            "Encryption/decryption routines",
+            "Policy evaluation engine",
+            "API request handlers"
+          ],
+          "corpus": "Seed with valid inputs, let fuzzer generate mutations"
+        }
+      },
+      "performance_benchmarking": {
+        "framework": "criterion.rs",
+        "benchmarks": [
+          {
+            "name": "config_parse_throughput",
+            "metric": "configs/second",
+            "target": ">10000 configs/sec for 10KB config"
+          },
+          {
+            "name": "secret_encryption_latency",
+            "metric": "p50, p95, p99 latency in microseconds",
+            "target": "p99 < 5ms for 4KB secret"
+          },
+          {
+            "name": "policy_evaluation_latency",
+            "metric": "p50, p95, p99 latency in microseconds",
+            "target": "p99 < 1ms for 100 rule policy"
+          },
+          {
+            "name": "backend_fetch_latency",
+            "metric": "p50, p95, p99 latency in milliseconds",
+            "target": "p99 < 100ms including network"
+          },
+          {
+            "name": "concurrent_request_throughput",
+            "metric": "requests/second at 1000 concurrent clients",
+            "target": ">5000 req/sec"
+          },
+          {
+            "name": "memory_usage_per_tenant",
+            "metric": "MB of heap per active tenant",
+            "target": "<10MB per tenant"
+          },
+          {
+            "name": "cache_hit_rate",
+            "metric": "percentage",
+            "target": ">90% for steady-state workload"
+          }
+        ],
+        "profiling": {
+          "cpu": "cargo flamegraph for hotspot analysis",
+          "memory": "valgrind/massif for allocation patterns",
+          "async": "tokio-console for async runtime inspection"
+        },
+        "load_testing": {
+          "tool": "k6 or locust",
+          "scenarios": [
+            "Steady state: 1000 RPS for 1 hour",
+            "Spike: 10x traffic for 5 minutes",
+            "Ramp up: 0 to 5000 RPS over 10 minutes"
+          ]
+        }
+      },
+      "chaos_engineering": {
+        "framework": "Custom implementation or toxiproxy",
+        "fault_injection": [
+          {
+            "fault": "Backend Unavailability",
+            "test": "Kill Vault container, verify fallback to secondary backend",
+            "expected": "Max 500ms degradation, no request failures"
+          },
+          {
+            "fault": "Network Latency",
+            "test": "Add 200ms latency to AWS Secrets Manager",
+            "expected": "Circuit breaker opens, uses cached values"
+          },
+          {
+            "fault": "Partial Network Partition",
+            "test": "50% packet loss to GCP Secret Manager",
+            "expected": "Retry with exponential backoff, eventual success"
+          },
+          {
+            "fault": "Database Connection Pool Exhaustion",
+            "test": "Hold all DB connections without releasing",
+            "expected": "New requests queued, timeout after 5s with error"
+          },
+          {
+            "fault": "Clock Skew",
+            "test": "Advance system clock by 1 hour",
+            "expected": "Token expiration handled correctly, no panics"
+          },
+          {
+            "fault": "Disk Full",
+            "test": "Fill disk where cache is stored",
+            "expected": "Graceful degradation to no-cache mode, alerts fired"
+          },
+          {
+            "fault": "CPU Starvation",
+            "test": "cgroup limits to 10% CPU",
+            "expected": "Increased latency but no crashes, request queue bounded"
+          },
+          {
+            "fault": "Memory Pressure",
+            "test": "cgroup limits to 256MB RAM",
+            "expected": "Cache eviction, reduced concurrency, no OOM kill"
+          }
+        ],
+        "game_days": {
+          "frequency": "Quarterly",
+          "scenarios": [
+            "Multi-region failover drill",
+            "Complete backend failure recovery",
+            "Security incident response (compromised keys)",
+            "Data center evacuation simulation"
+          ]
+        }
+      },
+      "contract_testing": {
+        "framework": "pact-rust for consumer-driven contracts",
+        "contracts": [
+          "LLM-Config-Manager <-> Vault API",
+          "LLM-Config-Manager <-> AWS Secrets Manager API",
+          "LLM-Config-Manager <-> Client SDKs (Python, Go, Rust)"
+        ]
+      },
+      "mutation_testing": {
+        "tool": "cargo-mutants",
+        "threshold": ">=70% mutation score",
+        "description": "Mutate source code to verify tests detect changes"
+      }
+    },
+    "validation_criteria": {
+      "configuration_schema_validation": {
+        "schema_language": "JSON Schema Draft 2020-12",
+        "validation_library": "jsonschema or schemars",
+        "requirements": [
+          {
+            "rule": "Strict schema adherence",
+            "enforcement": "Reject configs that don't match schema",
+            "error_handling": "Return detailed validation errors with path"
+          },
+          {
+            "rule": "Version compatibility",
+            "enforcement": "Support config versions v1, v2 with automatic migration",
+            "error_handling": "Warn on deprecated fields, error on unknown version"
+          },
+          {
+            "rule": "Required fields presence",
+            "enforcement": "All required fields must be present and non-null",
+            "error_handling": "List all missing fields in single error"
+          },
+          {
+            "rule": "Type safety",
+            "enforcement": "Strong typing, no implicit conversions",
+            "error_handling": "Reject string '123' for integer field"
+          },
+          {
+            "rule": "Value constraints",
+            "enforcement": "Min/max, regex patterns, enums",
+            "error_handling": "Descriptive error with actual vs expected"
+          },
+          {
+            "rule": "Cross-field validation",
+            "enforcement": "If encryption_enabled=true, then encryption_key_id required",
+            "error_handling": "Explain dependency between fields"
+          }
+        ],
+        "custom_validators": [
+          "validateBackendCredentials(backend_config)",
+          "validateRotationSchedule(rotation_policy)",
+          "validateAccessControlList(acl)",
+          "validateTenantIsolation(tenant_config)"
+        ]
+      },
+      "secret_strength_requirements": {
+        "entropy_minimum": "128 bits for secrets, 256 bits for master keys",
+        "validation": {
+          "min_length": "16 characters for passwords, 32 bytes for keys",
+          "character_requirements": "At least 3 of: uppercase, lowercase, digit, symbol",
+          "banned_patterns": [
+            "Common passwords (check against top 10k list)",
+            "Sequential characters (abc, 123)",
+            "Repeated characters (aaa, 111)",
+            "Dictionary words",
+            "Personal information (username, tenant_id)"
+          ],
+          "entropy_calculation": "Use zxcvbn-rs for entropy estimation"
+        },
+        "key_derivation": {
+          "algorithm": "Argon2id",
+          "parameters": "memory=64MB, iterations=3, parallelism=4",
+          "salt": "32 bytes cryptographically random per key"
+        },
+        "encryption_standards": {
+          "symmetric": "AES-256-GCM with 96-bit nonce",
+          "asymmetric": "RSA-4096 or Ed25519",
+          "hashing": "SHA-256 or BLAKE3",
+          "key_wrapping": "AES-KW (RFC 3394)"
+        },
+        "rotation_policy": {
+          "master_keys": "Every 90 days",
+          "tenant_keys": "Every 180 days",
+          "api_tokens": "Every 30 days",
+          "grace_period": "7 days for old key validity after rotation"
+        }
+      },
+      "access_control_policy_verification": {
+        "policy_model": "Hybrid RBAC + ABAC",
+        "verification_tests": [
+          {
+            "test": "Deny by default",
+            "validation": "User with no roles cannot access any resource"
+          },
+          {
+            "test": "Role assignment",
+            "validation": "User gains permissions only from explicitly assigned roles"
+          },
+          {
+            "test": "Permission transitivity",
+            "validation": "Role hierarchy respected (admin > operator > viewer)"
+          },
+          {
+            "test": "Resource ownership",
+            "validation": "Tenant can only access own resources, not other tenants"
+          },
+          {
+            "test": "Attribute-based conditions",
+            "validation": "Policy with time-of-day restriction enforced correctly"
+          },
+          {
+            "test": "Policy composition",
+            "validation": "Multiple policies combined with correct precedence (deny > allow)"
+          },
+          {
+            "test": "Dynamic attributes",
+            "validation": "Runtime attributes (IP address, request context) evaluated"
+          }
+        ],
+        "policy_language": {
+          "format": "Cedar policy language or custom DSL",
+          "static_analysis": "Detect contradictory policies, unreachable rules",
+          "testing": "Unit test each policy with positive and negative cases"
+        },
+        "audit": {
+          "log_decisions": "All authorization decisions logged with reason",
+          "policy_changes": "Version control for policies, audit log on change",
+          "compliance_reports": "Generate access reports for compliance audits"
+        }
+      },
+      "audit_trail_completeness": {
+        "logging_requirements": {
+          "events_to_log": [
+            "Authentication attempts (success/failure)",
+            "Authorization decisions (allow/deny with policy)",
+            "Secret access (read/write/delete)",
+            "Configuration changes",
+            "Key rotation events",
+            "Backend failover events",
+            "Administrative actions",
+            "API calls with request/response metadata"
+          ],
+          "log_format": "Structured JSON with consistent schema",
+          "required_fields": [
+            "timestamp (ISO 8601 with nanoseconds)",
+            "event_type",
+            "actor (user_id, service_account)",
+            "tenant_id",
+            "resource (type, id)",
+            "action",
+            "outcome (success/failure)",
+            "reason (for authorization decisions)",
+            "request_id (for correlation)",
+            "source_ip",
+            "user_agent",
+            "session_id"
+          ]
+        },
+        "integrity": {
+          "tamper_evidence": "Hash chain or digital signatures on log entries",
+          "immutability": "Write-only storage, append-only log files",
+          "retention": "7 years for compliance, 90 days hot, rest archived"
+        },
+        "searchability": {
+          "indexing": "Elasticsearch or similar for full-text search",
+          "query_api": "REST API for audit log queries with filters",
+          "aggregations": "Count events by type, actor, time window"
+        },
+        "alerting": {
+          "anomaly_detection": "ML-based detection of unusual access patterns",
+          "threshold_alerts": "Alert on N failed auth attempts in M minutes",
+          "compliance_alerts": "Alert on policy violations, unauthorized access attempts"
+        },
+        "compliance_mapping": {
+          "SOC2": "Map events to SOC2 controls (CC6.1, CC6.2, etc.)",
+          "ISO27001": "Map to A.12.4.1 (event logging), A.9.4.5 (access rights review)",
+          "GDPR": "Log data subject access, modification, deletion (Art. 30)",
+          "HIPAA": "Log PHI access per 164.312(b)"
+        }
+      },
+      "performance_slas": {
+        "latency": {
+          "p50": {
+            "config_fetch": "<10ms",
+            "secret_fetch": "<50ms (cached) / <200ms (uncached)",
+            "policy_evaluation": "<5ms"
+          },
+          "p95": {
+            "config_fetch": "<50ms",
+            "secret_fetch": "<100ms (cached) / <500ms (uncached)",
+            "policy_evaluation": "<20ms"
+          },
+          "p99": {
+            "config_fetch": "<100ms",
+            "secret_fetch": "<200ms (cached) / <1000ms (uncached)",
+            "policy_evaluation": "<50ms"
+          }
+        },
+        "throughput": {
+          "config_operations": ">10,000 ops/sec per instance",
+          "secret_operations": ">5,000 ops/sec per instance",
+          "policy_evaluations": ">20,000 evals/sec per instance"
+        },
+        "availability": {
+          "target": "99.95% uptime (21.6 minutes downtime/month)",
+          "measurement": "External health checks every 30 seconds",
+          "dependencies": "Degrade gracefully if backend unavailable"
+        },
+        "scalability": {
+          "horizontal": "Linear scaling to 100 instances",
+          "vertical": "Efficient up to 16 cores, 32GB RAM per instance",
+          "multi_tenancy": "Support 10,000 active tenants per instance"
+        },
+        "resource_utilization": {
+          "cpu": "<60% average utilization under normal load",
+          "memory": "<4GB heap per instance at 1000 RPS",
+          "network": "<100Mbps per instance",
+          "disk_io": "<1000 IOPS for local cache"
+        }
+      },
+      "functional_correctness": {
+        "idempotency": "Repeated operations produce same result (PUT, DELETE)",
+        "atomicity": "Multi-step operations all succeed or all fail",
+        "consistency": "Reads reflect latest write within 100ms (eventual consistency)",
+        "isolation": "Concurrent operations don't interfere (use DB transactions or locks)",
+        "durability": "Written data survives process restart, persisted to backend"
+      }
+    },
+    "optimization_strategies": {
+      "caching_layers": {
+        "l1_in_memory": {
+          "technology": "moka or mini-moka (Arc-based concurrent cache)",
+          "strategy": "LRU eviction with size and TTL limits",
+          "use_cases": [
+            "Recently accessed configurations",
+            "Frequently evaluated policies",
+            "Backend connection metadata"
+          ],
+          "configuration": {
+            "max_entries": "10,000 entries per cache",
+            "max_memory": "256MB per cache instance",
+            "ttl": "5 minutes for configs, 10 minutes for policies",
+            "tti": "1 minute (time to idle)"
+          }
+        },
+        "l2_distributed": {
+          "technology": "Redis cluster",
+          "strategy": "Shared cache across instances with pub/sub for invalidation",
+          "use_cases": [
+            "Secret metadata (not the secret itself)",
+            "Tenant configuration",
+            "Policy definitions",
+            "Rate limiting state"
+          ],
+          "configuration": {
+            "ttl": "15 minutes for tenant configs, 30 minutes for policies",
+            "eviction": "LRU with max memory 4GB",
+            "persistence": "AOF with fsync every second for durability"
+          }
+        },
+        "ttl_policies": {
+          "static_data": "24 hours (schemas, policy templates)",
+          "semi_static": "5-15 minutes (tenant configs, role definitions)",
+          "dynamic": "30-60 seconds (secret metadata, rate limit counters)",
+          "no_cache": "Actual secret values (always fetch from backend)"
+        },
+        "invalidation_strategies": {
+          "time_based": "Automatic expiration via TTL",
+          "event_based": "Invalidate on write via pub/sub",
+          "version_based": "Include version in cache key, increment on change",
+          "wildcard": "Invalidate all entries matching pattern (tenant_id:*)"
+        },
+        "cache_warming": {
+          "on_startup": "Pre-load top 1000 most accessed configs",
+          "scheduled": "Background job to refresh expiring entries before TTL",
+          "predictive": "ML model to predict next accesses and pre-fetch"
+        },
+        "cache_coherence": {
+          "problem": "Multiple instances with divergent caches",
+          "solution": "Redis pub/sub for invalidation messages across instances",
+          "fallback": "Short TTL ensures stale data window < 1 minute"
+        }
+      },
+      "connection_pooling": {
+        "database": {
+          "technology": "sqlx::PgPool for PostgreSQL",
+          "configuration": {
+            "min_connections": "10 per instance",
+            "max_connections": "100 per instance",
+            "connection_timeout": "5 seconds",
+            "idle_timeout": "10 minutes",
+            "max_lifetime": "30 minutes (refresh before backend timeout)"
+          },
+          "health_checks": "Run 'SELECT 1' every 30 seconds on idle connections"
+        },
+        "backend_stores": {
+          "vault": {
+            "technology": "vaultrs client with connection reuse",
+            "pooling": "HTTP/2 with connection reuse via reqwest",
+            "max_connections_per_host": "50",
+            "keep_alive": "90 seconds"
+          },
+          "aws_secrets_manager": {
+            "technology": "aws-sdk-rust with connection pooling",
+            "pooling": "Built-in HTTP client pool",
+            "timeout": "10 seconds per request",
+            "retries": "3 with exponential backoff"
+          },
+          "gcp_secret_manager": {
+            "technology": "google-cloud-rust",
+            "pooling": "gRPC channel pool with 10 channels",
+            "keep_alive": "60 seconds"
+          }
+        },
+        "redis": {
+          "technology": "redis-rs with connection multiplexing",
+          "configuration": {
+            "pool_size": "20 connections per instance",
+            "timeout": "1 second",
+            "reconnect": "Automatic with exponential backoff"
+          }
+        }
+      },
+      "lazy_loading_vs_eager_loading": {
+        "lazy_loading": {
+          "use_cases": [
+            "Large configuration trees (load sections on demand)",
+            "Secret values (only decrypt when accessed)",
+            "Tenant metadata (load only for active tenants)",
+            "Audit logs (stream instead of load all)"
+          ],
+          "implementation": "Rust traits with async fn for deferred loading",
+          "benefits": "Reduced memory, faster startup, lower backend load"
+        },
+        "eager_loading": {
+          "use_cases": [
+            "Access control policies (load all on startup for fast evaluation)",
+            "Schemas (load once, validate many times)",
+            "Critical path data (pre-fetch to avoid latency spikes)",
+            "Frequently accessed configs (cache warming)"
+          ],
+          "implementation": "Load during initialization or background jobs",
+          "benefits": "Predictable latency, no cold start penalty"
+        },
+        "hybrid_approach": {
+          "strategy": "Eager load hot data, lazy load cold data",
+          "hot_data_detection": "Track access frequency, promote to eager if >100 access/hour",
+          "adaptive": "Switch strategy based on memory pressure and access patterns"
+        }
+      },
+      "compression": {
+        "configuration_data": {
+          "algorithm": "zstd (level 3 for speed, level 19 for storage)",
+          "threshold": "Compress if size > 1KB",
+          "use_cases": [
+            "Large JSON/YAML configs before storing in backend",
+            "Audit logs before archiving",
+            "Cache entries to maximize cache size"
+          ],
+          "implementation": "Transparent compression layer in storage abstraction"
+        },
+        "network_transfer": {
+          "http_compression": "gzip or brotli for API responses",
+          "grpc_compression": "Built-in gzip for gRPC calls",
+          "websocket_compression": "permessage-deflate for realtime updates"
+        },
+        "cost_benefit": {
+          "cpu_overhead": "~5% CPU for compression",
+          "size_reduction": "60-80% for JSON configs",
+          "latency_impact": "<1ms for compression, <2ms for decompression",
+          "storage_savings": "Reduce backend storage costs by 70%"
+        }
+      },
+      "query_optimization": {
+        "multi_tenant_scenarios": {
+          "problem": "Slow queries across millions of configs for thousands of tenants",
+          "solutions": [
+            {
+              "technique": "Tenant-based partitioning",
+              "implementation": "Separate tables or schemas per tenant",
+              "trade_off": "Operational complexity vs query performance"
+            },
+            {
+              "technique": "Composite indexes",
+              "implementation": "Index on (tenant_id, config_key) for fast lookups",
+              "trade_off": "Write performance vs read performance"
+            },
+            {
+              "technique": "Query result caching",
+              "implementation": "Cache query results in Redis with tenant_id in key",
+              "trade_off": "Memory usage vs backend load"
+            },
+            {
+              "technique": "Read replicas",
+              "implementation": "Route read queries to replicas, writes to primary",
+              "trade_off": "Infrastructure cost vs scalability"
+            },
+            {
+              "technique": "Denormalization",
+              "implementation": "Store frequently accessed fields redundantly",
+              "trade_off": "Storage + consistency vs query speed"
+            }
+          ]
+        },
+        "batch_operations": {
+          "technique": "Batch multiple single-item operations into one query",
+          "implementation": "Collect requests for 10ms, execute as single batch",
+          "benefit": "Reduce DB round trips from N to 1"
+        },
+        "prepared_statements": {
+          "technique": "Pre-compile SQL queries with parameters",
+          "implementation": "Use sqlx compile-time checked queries",
+          "benefit": "Faster execution, protection against SQL injection"
+        }
+      },
+      "async_io": {
+        "runtime": "Tokio with work-stealing scheduler",
+        "strategy": "Async all the way (no blocking in async context)",
+        "thread_pool": {
+          "async_workers": "Equal to CPU cores for CPU-bound work",
+          "blocking_pool": "Separate thread pool for blocking operations (file I/O, crypto)"
+        },
+        "backpressure": {
+          "technique": "Bounded channels, semaphores for concurrency limits",
+          "implementation": "Limit in-flight requests to prevent overload",
+          "configuration": "Max 1000 concurrent requests per instance"
+        }
+      },
+      "binary_serialization": {
+        "protocol": "Use bincode or Cap'n Proto instead of JSON for internal RPC",
+        "benefit": "10x faster serialization, 50% smaller size",
+        "use_case": "Inter-service communication, cache storage"
+      },
+      "memory_optimization": {
+        "techniques": [
+          "Use Cow (Clone on Write) for immutable data",
+          "Use Arc instead of Clone for shared data",
+          "Use smallvec for small vectors (avoid heap allocation)",
+          "Use String interning for repeated strings (tenant names, config keys)",
+          "Use compact data structures (bitfields, enums) where possible"
+        ],
+        "profiling": "Regular memory profiling with heaptrack or massif",
+        "allocation_tracking": "Track large allocations, optimize hot paths"
+      }
+    },
+    "observability": {
+      "metrics": {
+        "format": "Prometheus exposition format",
+        "endpoint": "/metrics (protected, only accessible from monitoring network)",
+        "categories": [
+          {
+            "category": "Request Metrics",
+            "metrics": [
+              {
+                "name": "llm_config_manager_requests_total",
+                "type": "counter",
+                "labels": ["method", "endpoint", "status_code", "tenant_id"],
+                "description": "Total number of API requests"
+              },
+              {
+                "name": "llm_config_manager_request_duration_seconds",
+                "type": "histogram",
+                "labels": ["method", "endpoint", "tenant_id"],
+                "buckets": "[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 5.0]",
+                "description": "Request duration in seconds"
+              },
+              {
+                "name": "llm_config_manager_request_size_bytes",
+                "type": "histogram",
+                "labels": ["method", "endpoint"],
+                "buckets": "[100, 1000, 10000, 100000, 1000000]",
+                "description": "Request body size in bytes"
+              },
+              {
+                "name": "llm_config_manager_response_size_bytes",
+                "type": "histogram",
+                "labels": ["method", "endpoint"],
+                "buckets": "[100, 1000, 10000, 100000, 1000000]",
+                "description": "Response body size in bytes"
+              }
+            ]
+          },
+          {
+            "category": "Backend Metrics",
+            "metrics": [
+              {
+                "name": "llm_config_manager_backend_requests_total",
+                "type": "counter",
+                "labels": ["backend", "operation", "status"],
+                "description": "Total requests to backend stores"
+              },
+              {
+                "name": "llm_config_manager_backend_latency_seconds",
+                "type": "histogram",
+                "labels": ["backend", "operation"],
+                "buckets": "[0.01, 0.05, 0.1, 0.5, 1.0, 5.0]",
+                "description": "Backend operation latency"
+              },
+              {
+                "name": "llm_config_manager_backend_errors_total",
+                "type": "counter",
+                "labels": ["backend", "error_type"],
+                "description": "Backend errors by type"
+              },
+              {
+                "name": "llm_config_manager_backend_circuit_breaker_state",
+                "type": "gauge",
+                "labels": ["backend"],
+                "values": "0=closed, 1=open, 2=half_open",
+                "description": "Circuit breaker state"
+              }
+            ]
+          },
+          {
+            "category": "Cache Metrics",
+            "metrics": [
+              {
+                "name": "llm_config_manager_cache_hits_total",
+                "type": "counter",
+                "labels": ["cache_name", "cache_layer"],
+                "description": "Cache hits"
+              },
+              {
+                "name": "llm_config_manager_cache_misses_total",
+                "type": "counter",
+                "labels": ["cache_name", "cache_layer"],
+                "description": "Cache misses"
+              },
+              {
+                "name": "llm_config_manager_cache_evictions_total",
+                "type": "counter",
+                "labels": ["cache_name", "reason"],
+                "description": "Cache evictions by reason (size, ttl, manual)"
+              },
+              {
+                "name": "llm_config_manager_cache_size_bytes",
+                "type": "gauge",
+                "labels": ["cache_name"],
+                "description": "Current cache size in bytes"
+              },
+              {
+                "name": "llm_config_manager_cache_entries",
+                "type": "gauge",
+                "labels": ["cache_name"],
+                "description": "Current number of cache entries"
+              }
+            ]
+          },
+          {
+            "category": "Security Metrics",
+            "metrics": [
+              {
+                "name": "llm_config_manager_auth_attempts_total",
+                "type": "counter",
+                "labels": ["result", "method"],
+                "description": "Authentication attempts (success/failure)"
+              },
+              {
+                "name": "llm_config_manager_authz_decisions_total",
+                "type": "counter",
+                "labels": ["result", "tenant_id", "resource_type"],
+                "description": "Authorization decisions (allow/deny)"
+              },
+              {
+                "name": "llm_config_manager_secret_rotations_total",
+                "type": "counter",
+                "labels": ["backend", "result"],
+                "description": "Secret rotation operations"
+              },
+              {
+                "name": "llm_config_manager_secret_access_total",
+                "type": "counter",
+                "labels": ["operation", "tenant_id"],
+                "description": "Secret access operations (read/write/delete)"
+              }
+            ]
+          },
+          {
+            "category": "System Metrics",
+            "metrics": [
+              {
+                "name": "llm_config_manager_memory_usage_bytes",
+                "type": "gauge",
+                "description": "Process memory usage in bytes"
+              },
+              {
+                "name": "llm_config_manager_cpu_usage_percent",
+                "type": "gauge",
+                "description": "Process CPU usage percentage"
+              },
+              {
+                "name": "llm_config_manager_goroutines",
+                "type": "gauge",
+                "description": "Number of active async tasks (Rust equivalent)"
+              },
+              {
+                "name": "llm_config_manager_db_connections",
+                "type": "gauge",
+                "labels": ["state"],
+                "description": "Database connection pool state (idle/active)"
+              },
+              {
+                "name": "llm_config_manager_uptime_seconds",
+                "type": "gauge",
+                "description": "Process uptime in seconds"
+              }
+            ]
+          },
+          {
+            "category": "Business Metrics",
+            "metrics": [
+              {
+                "name": "llm_config_manager_active_tenants",
+                "type": "gauge",
+                "description": "Number of active tenants in last 5 minutes"
+              },
+              {
+                "name": "llm_config_manager_configs_per_tenant",
+                "type": "histogram",
+                "buckets": "[1, 10, 50, 100, 500, 1000]",
+                "description": "Number of configs per tenant"
+              },
+              {
+                "name": "llm_config_manager_secrets_per_tenant",
+                "type": "histogram",
+                "buckets": "[1, 10, 50, 100, 500, 1000]",
+                "description": "Number of secrets per tenant"
+              }
+            ]
+          }
+        ],
+        "instrumentation": {
+          "library": "prometheus client for Rust",
+          "collection_interval": "15 seconds",
+          "cardinality_control": "Limit label values to prevent cardinality explosion",
+          "high_cardinality_labels": "tenant_id (potential thousands of values) - sample or aggregate"
+        }
+      },
+      "distributed_tracing": {
+        "standard": "OpenTelemetry",
+        "protocol": "OTLP (OpenTelemetry Protocol)",
+        "implementation": {
+          "library": "opentelemetry-rust + tracing-opentelemetry",
+          "propagation": "W3C Trace Context headers",
+          "sampling": {
+            "strategy": "Adaptive sampling based on traffic volume",
+            "rates": {
+              "errors": "100% (always trace errors)",
+              "slow_requests": "100% (p99 > SLA threshold)",
+              "normal_requests": "1% (representative sample)"
+            }
+          }
+        },
+        "spans": [
+          {
+            "span_name": "http.request",
+            "attributes": [
+              "http.method",
+              "http.url",
+              "http.status_code",
+              "http.request_size",
+              "http.response_size",
+              "tenant.id",
+              "user.id"
+            ]
+          },
+          {
+            "span_name": "config.fetch",
+            "attributes": [
+              "config.key",
+              "config.version",
+              "cache.hit",
+              "backend.name"
+            ]
+          },
+          {
+            "span_name": "secret.decrypt",
+            "attributes": [
+              "secret.id",
+              "encryption.algorithm",
+              "key.id"
+            ]
+          },
+          {
+            "span_name": "policy.evaluate",
+            "attributes": [
+              "policy.id",
+              "policy.decision",
+              "policy.reason",
+              "evaluation.duration_ms"
+            ]
+          },
+          {
+            "span_name": "backend.query",
+            "attributes": [
+              "backend.type",
+              "backend.operation",
+              "backend.latency_ms",
+              "backend.retry_count"
+            ]
+          }
+        ],
+        "backends": [
+          "Jaeger (for development and small deployments)",
+          "Tempo (for production, integrates with Grafana)",
+          "Datadog APM (for enterprise customers)",
+          "AWS X-Ray (for AWS-native deployments)"
+        ],
+        "context_propagation": {
+          "incoming": "Extract trace context from HTTP headers or gRPC metadata",
+          "outgoing": "Inject trace context into all outbound calls (backend, cache, DB)",
+          "async_tasks": "Propagate context to spawned tasks via tracing::instrument"
+        }
+      },
+      "log_aggregation": {
+        "format": "Structured JSON with consistent schema",
+        "library": "tracing + tracing-subscriber",
+        "log_levels": {
+          "ERROR": "Actionable errors requiring immediate attention",
+          "WARN": "Potential issues, degraded performance",
+          "INFO": "Significant events (startup, config reload, rotation)",
+          "DEBUG": "Detailed diagnostics for troubleshooting",
+          "TRACE": "Very verbose, disabled in production"
+        },
+        "standard_fields": [
+          "timestamp (ISO 8601 with nanoseconds)",
+          "level",
+          "message",
+          "target (module path)",
+          "span_id",
+          "trace_id",
+          "tenant_id",
+          "request_id",
+          "file",
+          "line"
+        ],
+        "sensitive_data_handling": {
+          "redaction": "Automatically redact fields matching patterns (.*password.*, .*secret.*, .*token.*)",
+          "secret_types": "Never log secret values, only metadata (id, version)",
+          "pii": "Mask PII fields (email, IP address) per GDPR requirements"
+        },
+        "aggregation_backends": [
+          "Elasticsearch + Kibana (self-hosted)",
+          "Grafana Loki (lightweight, integrates with Grafana)",
+          "CloudWatch Logs (AWS)",
+          "Google Cloud Logging (GCP)",
+          "Datadog Logs (multi-cloud)"
+        ],
+        "retention": {
+          "hot_tier": "7 days in fast storage for queries",
+          "warm_tier": "30 days in slower storage",
+          "cold_tier": "7 years in archive (S3 Glacier) for compliance",
+          "deletion": "Automatic deletion after retention period"
+        },
+        "correlation": {
+          "technique": "Use trace_id to correlate logs across services",
+          "implementation": "Include trace_id in all log entries within a trace",
+          "benefit": "Single click from trace to related logs and back"
+        }
+      },
+      "alerting_rules": {
+        "platform": "Prometheus Alertmanager + PagerDuty/Opsgenie",
+        "alert_categories": [
+          {
+            "category": "Availability",
+            "alerts": [
+              {
+                "alert_name": "ServiceDown",
+                "condition": "up{job='llm-config-manager'} == 0",
+                "duration": "1m",
+                "severity": "critical",
+                "action": "Page on-call engineer immediately"
+              },
+              {
+                "alert_name": "HighErrorRate",
+                "condition": "rate(llm_config_manager_requests_total{status_code=~'5..'}[5m]) > 0.05",
+                "duration": "5m",
+                "severity": "critical",
+                "action": "Page on-call, indicates systemic issue"
+              },
+              {
+                "alert_name": "BackendUnavailable",
+                "condition": "llm_config_manager_backend_circuit_breaker_state{backend='vault'} == 1",
+                "duration": "2m",
+                "severity": "high",
+                "action": "Alert on-call, check backend health"
+              }
+            ]
+          },
+          {
+            "category": "Performance",
+            "alerts": [
+              {
+                "alert_name": "HighLatency",
+                "condition": "histogram_quantile(0.99, rate(llm_config_manager_request_duration_seconds_bucket[5m])) > 1.0",
+                "duration": "10m",
+                "severity": "high",
+                "action": "Investigate slow queries, check backend latency"
+              },
+              {
+                "alert_name": "LowCacheHitRate",
+                "condition": "rate(llm_config_manager_cache_hits_total[10m]) / (rate(llm_config_manager_cache_hits_total[10m]) + rate(llm_config_manager_cache_misses_total[10m])) < 0.5",
+                "duration": "15m",
+                "severity": "medium",
+                "action": "Check cache configuration, TTL settings"
+              },
+              {
+                "alert_name": "HighMemoryUsage",
+                "condition": "llm_config_manager_memory_usage_bytes > 4e9",
+                "duration": "5m",
+                "severity": "high",
+                "action": "Check for memory leaks, consider scaling"
+              }
+            ]
+          },
+          {
+            "category": "Security",
+            "alerts": [
+              {
+                "alert_name": "HighAuthFailureRate",
+                "condition": "rate(llm_config_manager_auth_attempts_total{result='failure'}[5m]) > 10",
+                "duration": "2m",
+                "severity": "high",
+                "action": "Possible brute force attack, block IP"
+              },
+              {
+                "alert_name": "UnauthorizedAccessAttempts",
+                "condition": "rate(llm_config_manager_authz_decisions_total{result='deny'}[5m]) > 50",
+                "duration": "5m",
+                "severity": "medium",
+                "action": "Investigate potential privilege escalation attempts"
+              },
+              {
+                "alert_name": "SecretRotationFailed",
+                "condition": "llm_config_manager_secret_rotations_total{result='failure'} > 0",
+                "duration": "1m",
+                "severity": "high",
+                "action": "Manual intervention required, secrets may be expired"
+              }
+            ]
+          },
+          {
+            "category": "Capacity",
+            "alerts": [
+              {
+                "alert_name": "DBConnectionPoolExhaustion",
+                "condition": "llm_config_manager_db_connections{state='idle'} < 5",
+                "duration": "5m",
+                "severity": "high",
+                "action": "Scale up or increase pool size"
+              },
+              {
+                "alert_name": "DiskSpaceLow",
+                "condition": "node_filesystem_avail_bytes{mountpoint='/var/lib/llm-config-manager'} / node_filesystem_size_bytes < 0.1",
+                "duration": "5m",
+                "severity": "high",
+                "action": "Clean up old logs, increase disk size"
+              }
+            ]
+          }
+        ],
+        "routing": {
+          "critical": "PagerDuty -> Phone call + SMS + Email",
+          "high": "PagerDuty -> SMS + Email",
+          "medium": "Slack alert to #ops-alerts",
+          "low": "Email to ops team"
+        },
+        "suppression": {
+          "maintenance_window": "Disable alerts during planned maintenance",
+          "flapping": "Require alert to be firing for duration before notifying",
+          "grouping": "Group related alerts together (all backend alerts)"
+        }
+      },
+      "health_checks": {
+        "liveness_probe": {
+          "endpoint": "/health/live",
+          "checks": ["Process is running", "HTTP server responding"],
+          "response": "200 OK if alive",
+          "use_case": "Kubernetes liveness probe, restart if failing"
+        },
+        "readiness_probe": {
+          "endpoint": "/health/ready",
+          "checks": [
+            "Database connection pool has available connections",
+            "At least one backend is reachable",
+            "Redis cache is accessible",
+            "Configuration loaded successfully"
+          ],
+          "response": "200 OK if ready, 503 Service Unavailable otherwise",
+          "use_case": "Kubernetes readiness probe, remove from load balancer if not ready"
+        },
+        "startup_probe": {
+          "endpoint": "/health/startup",
+          "checks": ["Initial configuration loaded", "Backends initialized"],
+          "response": "200 OK when startup complete",
+          "use_case": "Kubernetes startup probe, allow slow starts without killing"
+        }
+      },
+      "dashboards": {
+        "platform": "Grafana",
+        "dashboards": [
+          {
+            "name": "Service Overview",
+            "panels": [
+              "Request rate (RPS)",
+              "Error rate (%)",
+              "P50/P95/P99 latency",
+              "Active instances",
+              "Top tenants by request volume"
+            ]
+          },
+          {
+            "name": "Backend Health",
+            "panels": [
+              "Backend latency by backend",
+              "Backend error rate",
+              "Circuit breaker states",
+              "Connection pool utilization"
+            ]
+          },
+          {
+            "name": "Cache Performance",
+            "panels": [
+              "Cache hit rate",
+              "Cache size over time",
+              "Eviction rate",
+              "Cache latency"
+            ]
+          },
+          {
+            "name": "Security",
+            "panels": [
+              "Auth success/failure rate",
+              "Authorization denials",
+              "Secret access patterns",
+              "Failed rotation attempts"
+            ]
+          },
+          {
+            "name": "Resource Utilization",
+            "panels": [
+              "CPU usage",
+              "Memory usage",
+              "DB connections",
+              "Network I/O"
+            ]
+          }
+        ]
+      }
+    },
+    "security_hardening": {
+      "threat_modeling": {
+        "methodology": "STRIDE (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege)",
+        "threat_model_document": "docs/security/THREAT_MODEL.md",
+        "threats": [
+          {
+            "threat_id": "TM-001",
+            "category": "Spoofing",
+            "threat": "Attacker impersonates legitimate tenant",
+            "asset": "API authentication tokens",
+            "mitigation": [
+              "Use asymmetric JWT with RS256",
+              "Short token expiration (30 min)",
+              "Token rotation on suspicious activity",
+              "Bind tokens to IP address or client certificate"
+            ],
+            "residual_risk": "Low"
+          },
+          {
+            "threat_id": "TM-002",
+            "category": "Tampering",
+            "threat": "Attacker modifies configuration in transit",
+            "asset": "Configuration data in API requests/responses",
+            "mitigation": [
+              "TLS 1.3 for all communication",
+              "HTTPS with certificate pinning for backends",
+              "Integrity checks (HMAC) on cached data"
+            ],
+            "residual_risk": "Low"
+          },
+          {
+            "threat_id": "TM-003",
+            "category": "Repudiation",
+            "threat": "User denies performing malicious action",
+            "asset": "Audit logs",
+            "mitigation": [
+              "Comprehensive audit logging with digital signatures",
+              "Immutable append-only logs",
+              "Timestamp from trusted time source (NTP)"
+            ],
+            "residual_risk": "Low"
+          },
+          {
+            "threat_id": "TM-004",
+            "category": "Information Disclosure",
+            "threat": "Secrets leaked through logs or error messages",
+            "asset": "Secret values in memory and logs",
+            "mitigation": [
+              "Automatic secret redaction in logs",
+              "Use secrecy crate for secret types",
+              "Generic error messages to clients",
+              "Memory scrubbing on secret drop"
+            ],
+            "residual_risk": "Medium"
+          },
+          {
+            "threat_id": "TM-005",
+            "category": "Information Disclosure",
+            "threat": "Tenant A accesses tenant B's data",
+            "asset": "Multi-tenant data isolation",
+            "mitigation": [
+              "Row-level security in database",
+              "Tenant ID validation on every request",
+              "Separate encryption keys per tenant",
+              "Regular isolation testing"
+            ],
+            "residual_risk": "Low"
+          },
+          {
+            "threat_id": "TM-006",
+            "category": "Denial of Service",
+            "threat": "Attacker floods API with requests",
+            "asset": "Service availability",
+            "mitigation": [
+              "Rate limiting per tenant (1000 req/min)",
+              "Request queue with bounded size",
+              "Circuit breakers for backends",
+              "Load shedding under pressure"
+            ],
+            "residual_risk": "Medium"
+          },
+          {
+            "threat_id": "TM-007",
+            "category": "Denial of Service",
+            "threat": "Large config upload exhausts memory",
+            "asset": "System memory",
+            "mitigation": [
+              "Request size limits (10MB max)",
+              "Streaming parser for large configs",
+              "Memory limits per tenant",
+              "OOM killer protection"
+            ],
+            "residual_risk": "Low"
+          },
+          {
+            "threat_id": "TM-008",
+            "category": "Elevation of Privilege",
+            "threat": "User bypasses RBAC to access admin functions",
+            "asset": "Administrative APIs",
+            "mitigation": [
+              "Deny-by-default authorization",
+              "Explicit permission checks on every endpoint",
+              "Separation of admin and user APIs",
+              "Regular permission audits"
+            ],
+            "residual_risk": "Low"
+          },
+          {
+            "threat_id": "TM-009",
+            "category": "Elevation of Privilege",
+            "threat": "SQL injection through config queries",
+            "asset": "Database integrity",
+            "mitigation": [
+              "Parameterized queries only",
+              "Input validation and sanitization",
+              "Least privilege DB user",
+              "WAF with SQL injection rules"
+            ],
+            "residual_risk": "Low"
+          },
+          {
+            "threat_id": "TM-010",
+            "category": "Tampering",
+            "threat": "Compromised backend returns malicious config",
+            "asset": "Trust in backend stores",
+            "mitigation": [
+              "Integrity verification (HMAC) on fetched data",
+              "Mutual TLS with backends",
+              "Backend health monitoring",
+              "Alerting on unexpected data changes"
+            ],
+            "residual_risk": "Medium"
+          }
+        ],
+        "review_schedule": "Quarterly threat model reviews, after major features"
+      },
+      "vulnerability_scanning": {
+        "dependency_scanning": {
+          "tool": "cargo-audit",
+          "schedule": "Daily in CI/CD, blocking on HIGH/CRITICAL",
+          "action": "Auto-create tickets for vulnerabilities, patch within SLA",
+          "sla": {
+            "critical": "24 hours",
+            "high": "7 days",
+            "medium": "30 days",
+            "low": "90 days"
+          }
+        },
+        "container_scanning": {
+          "tool": "Trivy or Grype",
+          "schedule": "On every image build, nightly scan of deployed images",
+          "action": "Block deployment if CRITICAL vulnerabilities found",
+          "base_images": "Use minimal base images (distroless or alpine)"
+        },
+        "static_analysis": {
+          "tool": "cargo-clippy with security lints",
+          "schedule": "On every commit in CI/CD",
+          "lints": [
+            "Unsafe code blocks (require justification)",
+            "Panic in production code",
+            "Unwrap without error handling",
+            "Hardcoded secrets or credentials"
+          ]
+        },
+        "dynamic_analysis": {
+          "tool": "OWASP ZAP for API scanning",
+          "schedule": "Weekly scan of staging environment",
+          "tests": [
+            "SQL injection",
+            "XSS",
+            "CSRF",
+            "Authentication bypass",
+            "Authorization bypass",
+            "Sensitive data exposure"
+          ]
+        },
+        "supply_chain_security": {
+          "sbom": "Generate SBOM (Software Bill of Materials) with cargo-sbom",
+          "provenance": "Sign artifacts with Sigstore/cosign",
+          "verification": "Verify signatures before deployment"
+        }
+      },
+      "secret_scanning": {
+        "ci_cd_integration": {
+          "pre_commit": {
+            "tool": "git-secrets or gitleaks",
+            "action": "Block commit if secrets detected",
+            "patterns": [
+              "AWS keys (AKIA*)",
+              "API tokens",
+              "Private keys (BEGIN PRIVATE KEY)",
+              "Passwords in config files"
+            ]
+          },
+          "pr_checks": {
+            "tool": "truffleHog",
+            "action": "Fail PR if secrets in diff",
+            "notification": "Alert security team on detection"
+          },
+          "repository_scan": {
+            "tool": "gitleaks",
+            "schedule": "Daily full repository scan",
+            "action": "Report to security dashboard"
+          }
+        },
+        "runtime_protection": {
+          "environment_variables": "Never log environment variables",
+          "config_files": "Encrypt secrets in config files at rest",
+          "memory_dumps": "Disable core dumps in production",
+          "stack_traces": "Redact secrets from stack traces"
+        }
+      },
+      "compliance_validation": {
+        "soc2": {
+          "controls": [
+            {
+              "control_id": "CC6.1",
+              "description": "Logical and physical access controls",
+              "implementation": [
+                "RBAC for all resources",
+                "Multi-factor authentication for admin access",
+                "Audit logging of all access"
+              ],
+              "evidence": "Audit logs, access reviews, policy documents"
+            },
+            {
+              "control_id": "CC6.6",
+              "description": "Encryption of data in transit and at rest",
+              "implementation": [
+                "TLS 1.3 for all communication",
+                "AES-256-GCM for data at rest",
+                "Key management via KMS or Vault"
+              ],
+              "evidence": "Configuration files, encryption tests, key rotation logs"
+            },
+            {
+              "control_id": "CC6.7",
+              "description": "Data retention and disposal",
+              "implementation": [
+                "Automated retention policies (7 years audit logs)",
+                "Secure deletion of secrets (zero memory)",
+                "Data disposal logs"
+              ],
+              "evidence": "Retention policies, disposal logs, code review"
+            },
+            {
+              "control_id": "CC7.2",
+              "description": "System monitoring and incident detection",
+              "implementation": [
+                "Prometheus metrics and alerts",
+                "Distributed tracing with OpenTelemetry",
+                "24/7 on-call rotation"
+              ],
+              "evidence": "Monitoring dashboards, alert history, incident reports"
+            }
+          ],
+          "audit_support": {
+            "artifacts": [
+              "System architecture diagrams",
+              "Data flow diagrams",
+              "Security policies",
+              "Incident response plan",
+              "Disaster recovery plan"
+            ],
+            "testing": "Automated tests for each control, evidence collection"
+          }
+        },
+        "iso27001": {
+          "controls": [
+            {
+              "control_id": "A.9.4.1",
+              "description": "Information access restriction",
+              "implementation": "Need-to-know access, role-based permissions",
+              "evidence": "Access control matrix, permission tests"
+            },
+            {
+              "control_id": "A.12.4.1",
+              "description": "Event logging",
+              "implementation": "Comprehensive audit trail, log integrity",
+              "evidence": "Log samples, retention policies"
+            },
+            {
+              "control_id": "A.14.2.8",
+              "description": "System security testing",
+              "implementation": "Penetration testing, vulnerability scanning",
+              "evidence": "Test reports, remediation tracking"
+            },
+            {
+              "control_id": "A.18.1.3",
+              "description": "Protection of records",
+              "implementation": "Encrypted backups, access controls on archives",
+              "evidence": "Backup procedures, encryption verification"
+            }
+          ]
+        },
+        "gdpr": {
+          "requirements": [
+            {
+              "article": "Article 25",
+              "requirement": "Data protection by design and default",
+              "implementation": [
+                "Minimal data collection",
+                "Privacy-preserving defaults",
+                "Encryption by default"
+              ]
+            },
+            {
+              "article": "Article 30",
+              "requirement": "Records of processing activities",
+              "implementation": "Audit logs of all data access and modifications",
+              "evidence": "Audit log exports, data flow documentation"
+            },
+            {
+              "article": "Article 32",
+              "requirement": "Security of processing",
+              "implementation": [
+                "Encryption",
+                "Access controls",
+                "Regular security testing"
+              ]
+            },
+            {
+              "article": "Article 33",
+              "requirement": "Notification of data breach",
+              "implementation": "Automated breach detection, 72-hour notification process",
+              "evidence": "Incident response plan, breach notification templates"
+            }
+          ]
+        },
+        "nist_800_53": {
+          "controls": [
+            {
+              "control_id": "AC-3",
+              "family": "Access Control",
+              "control": "Access Enforcement",
+              "implementation": "RBAC + ABAC policy engine"
+            },
+            {
+              "control_id": "AU-2",
+              "family": "Audit and Accountability",
+              "control": "Audit Events",
+              "implementation": "Comprehensive event logging"
+            },
+            {
+              "control_id": "SC-8",
+              "family": "System and Communications Protection",
+              "control": "Transmission Confidentiality",
+              "implementation": "TLS 1.3 for all network communication"
+            },
+            {
+              "control_id": "SC-28",
+              "family": "System and Communications Protection",
+              "control": "Protection of Information at Rest",
+              "implementation": "AES-256-GCM encryption"
+            }
+          ]
+        },
+        "automation": {
+          "continuous_compliance": "Automated compliance checks in CI/CD",
+          "policy_as_code": "Codify compliance requirements as tests",
+          "reporting": "Auto-generate compliance reports for auditors",
+          "dashboards": "Real-time compliance status dashboard"
+        }
+      },
+      "secure_development": {
+        "secure_coding_guidelines": {
+          "document": "docs/security/SECURE_CODING.md",
+          "principles": [
+            "Input validation (whitelist, not blacklist)",
+            "Output encoding (prevent injection)",
+            "Least privilege (minimal permissions)",
+            "Defense in depth (multiple layers)",
+            "Fail securely (deny by default)",
+            "No security through obscurity"
+          ],
+          "code_review": {
+            "requirement": "All code reviewed by 2 engineers, 1 with security focus",
+            "checklist": "Security-focused code review checklist",
+            "tools": "Automated security checks in PR (cargo-clippy, audit)"
+          }
+        },
+        "security_training": {
+          "frequency": "Annual security training for all engineers",
+          "topics": [
+            "OWASP Top 10",
+            "Secure coding in Rust",
+            "Threat modeling",
+            "Incident response"
+          ]
+        },
+        "incident_response": {
+          "plan": "docs/security/INCIDENT_RESPONSE.md",
+          "phases": [
+            "Preparation (runbooks, contacts)",
+            "Detection (monitoring, alerts)",
+            "Containment (isolate affected systems)",
+            "Eradication (remove threat)",
+            "Recovery (restore service)",
+            "Lessons learned (post-mortem)"
+          ],
+          "drills": "Quarterly incident response drills"
+        }
+      },
+      "network_security": {
+        "tls_configuration": {
+          "version": "TLS 1.3 minimum (1.2 deprecated)",
+          "cipher_suites": [
+            "TLS_AES_256_GCM_SHA384",
+            "TLS_CHACHA20_POLY1305_SHA256",
+            "TLS_AES_128_GCM_SHA256"
+          ],
+          "certificate_management": {
+            "issuer": "Let's Encrypt or internal PKI",
+            "rotation": "90 days (automated with cert-manager)",
+            "monitoring": "Alert 14 days before expiration"
+          }
+        },
+        "api_security": {
+          "authentication": "JWT with RS256 or mutual TLS",
+          "authorization": "OAuth 2.0 with scopes",
+          "rate_limiting": "1000 req/min per tenant",
+          "cors": "Whitelist allowed origins, no wildcards",
+          "csrf": "CSRF tokens for state-changing operations"
+        },
+        "network_segmentation": {
+          "architecture": "API gateway -> Application tier -> Data tier",
+          "firewall_rules": "Deny all by default, explicit allow rules",
+          "isolation": "Separate networks for prod, staging, dev"
+        }
+      },
+      "secrets_management_hardening": {
+        "key_management": {
+          "hierarchy": "Master key (HSM) -> Tenant keys (KMS) -> Data encryption keys",
+          "storage": "Master keys in HSM (Hardware Security Module)",
+          "access": "Minimal services can access master keys",
+          "rotation": "Automated rotation every 90 days"
+        },
+        "encryption_in_use": {
+          "technique": "Confidential computing (Intel SGX, AMD SEV)",
+          "use_case": "Encrypt secrets in memory during processing",
+          "trade_off": "Performance overhead vs security"
+        }
+      }
+    }
+  }
+}

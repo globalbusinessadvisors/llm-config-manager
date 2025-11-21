@@ -1,0 +1,59 @@
+# Prometheus Configuration for LLM Config Manager
+#
+# This configuration sets up Prometheus to scrape metrics from
+# the LLM Config Manager service.
+
+global:
+  scrape_interval: 15s      # How frequently to scrape targets
+  evaluation_interval: 15s   # How frequently to evaluate rules
+  external_labels:
+    cluster: 'llm-config-production'
+    environment: 'production'
+
+# Load alert rules
+rule_files:
+  - 'alerts.yml'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'localhost:9093'
+
+# Scrape configurations
+scrape_configs:
+  # LLM Config Manager application
+  - job_name: 'llm-config-manager'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets:
+          - 'localhost:9090'
+        labels:
+          service: 'llm-config-manager'
+          tier: 'application'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets:
+          - 'localhost:9090'
+        labels:
+          service: 'prometheus'
+
+  # Node exporter for system metrics (optional)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets:
+          - 'localhost:9100'
+        labels:
+          service: 'node-exporter'
+
+# Remote write for long-term storage (optional)
+# remote_write:
+#   - url: 'http://cortex:9009/api/prom/push'
+#   - url: 'http://thanos:10902/api/v1/receive'
+
+# Remote read for federated queries (optional)
+# remote_read:
+#   - url: 'http://cortex:9009/api/prom/read'

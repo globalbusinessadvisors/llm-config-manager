@@ -1,0 +1,2602 @@
+{
+  "architecture": {
+    "metadata": {
+      "version": "1.0.0",
+      "created": "2025-11-21",
+      "methodology": "SPARC - Architecture Phase",
+      "project": "LLM-Config-Manager",
+      "ecosystem": "LLM DevOps"
+    },
+    "recommended_crates": {
+      "cryptography_and_security": {
+        "primary": {
+          "ring": {
+            "version": "^0.17",
+            "purpose": "Core cryptographic operations, encryption, hashing",
+            "rationale": "Actively maintained, misuse-resistant API, battle-tested in production, preferred over deprecated sodiumoxide",
+            "use_cases": [
+              "AES-GCM encryption for configuration secrets",
+              "HMAC for data integrity verification",
+              "Key derivation (PBKDF2, HKDF)",
+              "Secure random number generation"
+            ]
+          },
+          "rustls": {
+            "version": "^0.23",
+            "purpose": "TLS implementation for secure communications",
+            "rationale": "Modern, memory-safe TLS library, excellent performance",
+            "use_cases": [
+              "HTTPS server/client communications",
+              "mTLS for service-to-service authentication",
+              "Secure vault backend connections"
+            ]
+          },
+          "argon2": {
+            "version": "^0.5",
+            "purpose": "Password hashing and key derivation",
+            "rationale": "Winner of Password Hashing Competition, resistant to GPU attacks",
+            "use_cases": [
+              "Master password derivation",
+              "Key encryption keys (KEK) generation"
+            ]
+          }
+        },
+        "supplementary": {
+          "chacha20poly1305": {
+            "version": "^0.10",
+            "purpose": "Alternative AEAD cipher",
+            "rationale": "Better performance on systems without AES-NI hardware acceleration",
+            "use_cases": [
+              "Config encryption on ARM/embedded systems",
+              "Streaming encryption for large configurations"
+            ]
+          },
+          "ed25519-dalek": {
+            "version": "^2.1",
+            "purpose": "Digital signatures",
+            "rationale": "Fast, secure signature scheme for integrity verification",
+            "use_cases": [
+              "Configuration signing",
+              "Audit log integrity",
+              "Policy attestation"
+            ]
+          },
+          "x509-parser": {
+            "version": "^0.16",
+            "purpose": "Certificate parsing and validation",
+            "rationale": "Required for mTLS and certificate-based authentication",
+            "use_cases": [
+              "Client certificate validation",
+              "Service identity verification"
+            ]
+          }
+        }
+      },
+      "serialization_and_configuration": {
+        "core": {
+          "serde": {
+            "version": "^1.0",
+            "purpose": "Universal serialization framework",
+            "rationale": "De-facto standard for Rust serialization",
+            "features": ["derive"]
+          },
+          "serde_json": {
+            "version": "^1.0",
+            "purpose": "JSON format support",
+            "rationale": "Most widely used, excellent for APIs",
+            "use_cases": [
+              "REST API request/response",
+              "Configuration export/import",
+              "Audit log storage"
+            ]
+          },
+          "toml": {
+            "version": "^0.8",
+            "purpose": "TOML format for config files",
+            "rationale": "Human-friendly, excellent for declarative configs",
+            "use_cases": [
+              "User-facing configuration files",
+              "Policy definitions",
+              "Service manifests"
+            ]
+          },
+          "serde-yaml-ng": {
+            "version": "^0.10",
+            "purpose": "YAML format support (maintained fork)",
+            "rationale": "Original serde_yaml is deprecated, this is the maintained alternative",
+            "use_cases": [
+              "Kubernetes-style configurations",
+              "Multi-document configs",
+              "Complex nested structures"
+            ]
+          }
+        },
+        "specialized": {
+          "config": {
+            "version": "^0.14",
+            "purpose": "Layered configuration management",
+            "rationale": "Supports multiple sources, environment overrides, hierarchical configs",
+            "use_cases": [
+              "Environment-specific configurations",
+              "Configuration inheritance",
+              "Default value management"
+            ]
+          },
+          "figment": {
+            "version": "^0.10",
+            "purpose": "Advanced configuration aggregation",
+            "rationale": "Type-safe, composable config sources with excellent error messages",
+            "use_cases": [
+              "Multi-source configuration merging",
+              "Profile-based configurations",
+              "Configuration validation"
+            ]
+          }
+        }
+      },
+      "secrets_backend_integration": {
+        "hashicorp_vault": {
+          "vaultrs": {
+            "version": "^0.7",
+            "purpose": "Async HashiCorp Vault client",
+            "rationale": "Most feature-complete and actively maintained Vault client for Rust",
+            "supported_features": [
+              "KV v1/v2 secrets engines",
+              "Transit encryption",
+              "AppRole, Token, Kubernetes auth",
+              "Dynamic secrets (AWS, Database)",
+              "Seal/unseal operations"
+            ]
+          }
+        },
+        "cloud_kms": {
+          "rusoto_kms": {
+            "version": "^0.48",
+            "purpose": "AWS KMS integration",
+            "rationale": "Official AWS SDK support for Rust",
+            "use_cases": [
+              "Envelope encryption with AWS KMS",
+              "Key rotation management",
+              "Cross-region key replication"
+            ]
+          },
+          "gcp_auth": {
+            "version": "^0.12",
+            "purpose": "GCP authentication",
+            "rationale": "Required for GCP KMS access"
+          },
+          "google-cloudkms1": {
+            "version": "^5.0",
+            "purpose": "GCP Cloud KMS integration",
+            "rationale": "Official Google Cloud KMS API client",
+            "use_cases": [
+              "Envelope encryption with GCP KMS",
+              "HSM-backed key operations",
+              "Asymmetric key operations"
+            ]
+          }
+        },
+        "azure": {
+          "azure_security_keyvault": {
+            "version": "^0.20",
+            "purpose": "Azure Key Vault integration",
+            "rationale": "Official Azure SDK for Rust",
+            "use_cases": [
+              "Azure Key Vault secrets/keys/certificates",
+              "Managed HSM operations",
+              "RBAC integration with Azure AD"
+            ]
+          }
+        }
+      },
+      "http_grpc_servers": {
+        "http_frameworks": {
+          "axum": {
+            "version": "^0.7",
+            "purpose": "Primary HTTP/REST API framework",
+            "rationale": "Modern async patterns, excellent ergonomics, Tokio integration, best for new projects",
+            "strengths": [
+              "Type-safe extractors and middleware",
+              "Tower ecosystem integration",
+              "Excellent error handling",
+              "Lower resource usage than actix-web",
+              "Intuitive API design"
+            ],
+            "use_cases": [
+              "REST API server",
+              "Health/metrics endpoints",
+              "Admin dashboard backend"
+            ]
+          },
+          "actix-web": {
+            "version": "^4.5",
+            "purpose": "Alternative high-performance HTTP framework",
+            "rationale": "Best raw performance, mature ecosystem, use if extreme throughput is critical",
+            "strengths": [
+              "Highest benchmark performance",
+              "Extensive middleware ecosystem",
+              "Actor-based concurrency model",
+              "Production-proven at scale"
+            ],
+            "use_cases": [
+              "High-throughput API gateways",
+              "Real-time configuration updates",
+              "WebSocket support for live config sync"
+            ]
+          }
+        },
+        "grpc": {
+          "tonic": {
+            "version": "^0.11",
+            "purpose": "gRPC server and client implementation",
+            "rationale": "Best-in-class gRPC for Rust, excellent performance, full HTTP/2 support",
+            "strengths": [
+              "Native async/await support",
+              "Built on hyper and tower",
+              "Excellent streaming support",
+              "Code generation from protobuf"
+            ],
+            "use_cases": [
+              "Service-to-service communication",
+              "High-performance config sync",
+              "Binary protocol for internal APIs",
+              "Bidirectional streaming for real-time updates"
+            ]
+          },
+          "prost": {
+            "version": "^0.12",
+            "purpose": "Protocol Buffers implementation",
+            "rationale": "Used by tonic for message serialization, excellent code generation",
+            "use_cases": [
+              "Message schema definition",
+              "Efficient binary serialization",
+              "Cross-language compatibility"
+            ]
+          }
+        },
+        "supporting": {
+          "tower": {
+            "version": "^0.4",
+            "purpose": "Service abstraction and middleware",
+            "rationale": "Powers both axum and tonic, provides composable middleware",
+            "use_cases": [
+              "Rate limiting",
+              "Timeout handling",
+              "Load balancing",
+              "Circuit breakers"
+            ]
+          },
+          "tower-http": {
+            "version": "^0.5",
+            "purpose": "HTTP-specific Tower middleware",
+            "rationale": "CORS, compression, tracing, authentication middleware",
+            "use_cases": [
+              "CORS handling",
+              "Request/response logging",
+              "Compression (gzip, brotli)",
+              "Authentication/authorization layers"
+            ]
+          }
+        }
+      },
+      "database_and_storage": {
+        "sql": {
+          "sqlx": {
+            "version": "^0.7",
+            "purpose": "Async SQL database driver",
+            "rationale": "Compile-time query verification, async-first, supports PostgreSQL, MySQL, SQLite",
+            "features": ["runtime-tokio-rustls", "postgres", "migrate"],
+            "use_cases": [
+              "Audit log persistence",
+              "Configuration version history",
+              "RBAC policy storage",
+              "Metadata indexing"
+            ]
+          }
+        },
+        "key_value": {
+          "sled": {
+            "version": "^0.34",
+            "purpose": "Embedded database",
+            "rationale": "Pure Rust, embedded, ACID, excellent for local caching",
+            "use_cases": [
+              "Local configuration cache",
+              "CLI tool state persistence",
+              "Offline-first operations"
+            ]
+          },
+          "redis": {
+            "version": "^0.24",
+            "purpose": "Redis client",
+            "rationale": "Distributed caching, pub/sub for config updates",
+            "use_cases": [
+              "Distributed cache layer",
+              "Configuration change notifications",
+              "Rate limiting state",
+              "Session storage"
+            ]
+          }
+        }
+      },
+      "observability_and_logging": {
+        "tracing": {
+          "version": "^0.1",
+          "purpose": "Structured logging and distributed tracing",
+          "rationale": "De-facto standard for Rust observability, excellent async support",
+          "use_cases": [
+            "Application logging",
+            "Distributed tracing",
+            "Performance profiling",
+            "Request correlation"
+          ]
+        },
+        "tracing-subscriber": {
+          "version": "^0.3",
+          "purpose": "Tracing output and formatting",
+          "rationale": "Flexible subscriber implementation for various backends",
+          "features": ["env-filter", "json"]
+        },
+        "metrics": {
+          "version": "^0.22",
+          "purpose": "Application metrics collection",
+          "rationale": "Vendor-agnostic metrics API",
+          "use_cases": [
+            "Request counters",
+            "Latency histograms",
+            "Resource utilization"
+          ]
+        },
+        "metrics-exporter-prometheus": {
+          "version": "^0.13",
+          "purpose": "Prometheus metrics export",
+          "rationale": "Standard metrics format for Kubernetes/cloud native",
+          "use_cases": [
+            "Prometheus scraping endpoint",
+            "Grafana dashboard integration"
+          ]
+        }
+      },
+      "cli_and_tui": {
+        "clap": {
+          "version": "^4.5",
+          "purpose": "Command-line argument parsing",
+          "rationale": "Most popular, derive macros, excellent UX",
+          "features": ["derive", "env"],
+          "use_cases": [
+            "CLI command structure",
+            "Subcommands and arguments",
+            "Environment variable integration"
+          ]
+        },
+        "ratatui": {
+          "version": "^0.26",
+          "purpose": "Terminal UI framework",
+          "rationale": "Modern fork of tui-rs, actively maintained",
+          "use_cases": [
+            "Interactive TUI for config management",
+            "Real-time monitoring dashboard",
+            "Configuration browser"
+          ]
+        },
+        "crossterm": {
+          "version": "^0.27",
+          "purpose": "Cross-platform terminal manipulation",
+          "rationale": "Works with ratatui, handles terminal I/O",
+          "use_cases": [
+            "Terminal event handling",
+            "Color output",
+            "Cursor control"
+          ]
+        },
+        "indicatif": {
+          "version": "^0.17",
+          "purpose": "Progress bars and spinners",
+          "rationale": "User-friendly CLI feedback",
+          "use_cases": [
+            "Long-running operations",
+            "Batch processing feedback",
+            "Download/upload progress"
+          ]
+        }
+      },
+      "testing_and_validation": {
+        "validation": {
+          "validator": {
+            "version": "^0.18",
+            "purpose": "Data validation with derive macros",
+            "rationale": "Declarative validation rules",
+            "use_cases": [
+              "Configuration schema validation",
+              "Input sanitization",
+              "Business rule enforcement"
+            ]
+          },
+          "jsonschema": {
+            "version": "^0.17",
+            "purpose": "JSON Schema validation",
+            "rationale": "Standard-compliant JSON Schema validator",
+            "use_cases": [
+              "Configuration schema enforcement",
+              "API request validation",
+              "Policy schema validation"
+            ]
+          }
+        },
+        "testing": {
+          "mockall": {
+            "version": "^0.12",
+            "purpose": "Mocking framework",
+            "rationale": "Powerful mocking for trait objects",
+            "use_cases": [
+              "Unit testing vault integrations",
+              "HTTP client mocking",
+              "Database mocking"
+            ]
+          },
+          "wiremock": {
+            "version": "^0.6",
+            "purpose": "HTTP mocking",
+            "rationale": "Test external API integrations",
+            "use_cases": [
+              "Vault API mocking",
+              "Cloud KMS testing",
+              "Integration tests"
+            ]
+          },
+          "proptest": {
+            "version": "^1.4",
+            "purpose": "Property-based testing",
+            "rationale": "Discover edge cases in encryption/config logic",
+            "use_cases": [
+              "Cryptographic function testing",
+              "Configuration parser fuzzing",
+              "RBAC rule validation"
+            ]
+          }
+        }
+      }
+    },
+    "deployment_options": [
+      {
+        "name": "CLI Management Tool",
+        "architecture_type": "Standalone Binary",
+        "description": "Single-binary CLI tool for local configuration management and administrative operations",
+        "components": [
+          "Command-line interface (clap)",
+          "Local configuration cache (sled)",
+          "Vault/KMS client integration",
+          "Configuration editor and validator",
+          "Audit log viewer",
+          "Export/import utilities"
+        ],
+        "deployment_model": {
+          "packaging": [
+            "Native binaries for Linux, macOS, Windows",
+            "Docker container for cross-platform",
+            "Homebrew/apt/yum packages",
+            "GitHub releases with auto-updates"
+          ],
+          "distribution": [
+            "GitHub Releases",
+            "Package managers (cargo, brew, apt)",
+            "Internal artifact repository"
+          ]
+        },
+        "use_cases": [
+          "Developer workstation configuration management",
+          "CI/CD pipeline configuration injection",
+          "Emergency configuration rollback",
+          "Local development with offline-first support",
+          "Administrative operations (key rotation, policy updates)"
+        ],
+        "advantages": [
+          "Zero infrastructure required",
+          "Fast local operations with caching",
+          "Works offline with cached configs",
+          "Easy to install and update",
+          "Low latency for development workflows"
+        ],
+        "considerations": [
+          "Each user needs vault credentials",
+          "No centralized change control",
+          "Manual updates required",
+          "Limited multi-user collaboration"
+        ],
+        "security_model": {
+          "authentication": "User-provided vault tokens or API keys",
+          "authorization": "Inherits user's vault/KMS permissions",
+          "secrets_storage": "OS keychain integration (keyring-rs)",
+          "encryption_at_rest": "Local cache encrypted with user key"
+        },
+        "scalability": {
+          "target_scale": "Individual developers and small teams",
+          "concurrent_users": "1 (single user per installation)",
+          "performance": "Local operations: <10ms, Vault operations: <100ms"
+        }
+      },
+      {
+        "name": "Microservice API Server",
+        "architecture_type": "Centralized Service",
+        "description": "Always-on API server providing centralized configuration management with caching, authentication, and audit logging",
+        "components": [
+          "HTTP/REST API (axum)",
+          "gRPC API (tonic) for service-to-service",
+          "Authentication/Authorization layer (JWT, mTLS)",
+          "Distributed cache (Redis)",
+          "Audit logging (PostgreSQL)",
+          "Metrics and monitoring (Prometheus)",
+          "Health checks and readiness probes"
+        ],
+        "deployment_model": {
+          "kubernetes": {
+            "deployment_type": "Deployment with HPA",
+            "replicas": "3+ for high availability",
+            "resources": {
+              "requests": "256Mi memory, 100m CPU",
+              "limits": "1Gi memory, 1000m CPU"
+            },
+            "services": [
+              "ClusterIP for internal access",
+              "Ingress for external REST API",
+              "Headless service for gRPC"
+            ],
+            "config": [
+              "ConfigMap for app configuration",
+              "Secret for vault credentials",
+              "PVC for local cache (optional)"
+            ]
+          },
+          "cloud_native": {
+            "aws": "ECS Fargate or EKS",
+            "gcp": "Cloud Run or GKE",
+            "azure": "Container Apps or AKS"
+          }
+        },
+        "use_cases": [
+          "Centralized configuration service for microservices",
+          "Multi-tenant configuration management",
+          "Audit and compliance requirements",
+          "Configuration as a service (CaaS)",
+          "GitOps-driven configuration updates",
+          "Real-time configuration distribution"
+        ],
+        "advantages": [
+          "Centralized access control and auditing",
+          "High availability and redundancy",
+          "Horizontal scalability",
+          "Consistent configuration across environments",
+          "Rate limiting and quota management",
+          "Built-in observability"
+        ],
+        "considerations": [
+          "Requires infrastructure and operations",
+          "Network dependency for all config access",
+          "Additional complexity for deployment",
+          "Higher operational costs"
+        ],
+        "api_design": {
+          "rest_api": {
+            "base_path": "/api/v1",
+            "endpoints": [
+              "GET /configs/{namespace}/{key}",
+              "POST /configs/{namespace}/{key}",
+              "PUT /configs/{namespace}/{key}",
+              "DELETE /configs/{namespace}/{key}",
+              "GET /configs/{namespace}?environment={env}",
+              "GET /configs/{namespace}/history",
+              "POST /configs/{namespace}/validate",
+              "POST /configs/bulk",
+              "GET /health",
+              "GET /metrics"
+            ],
+            "authentication": "Bearer token (JWT) or mTLS",
+            "rate_limiting": "Per-tenant rate limits with token bucket"
+          },
+          "grpc_api": {
+            "services": [
+              "ConfigService (CRUD operations)",
+              "WatchService (streaming config updates)",
+              "ValidateService (schema validation)",
+              "AuditService (query audit logs)"
+            ],
+            "authentication": "mTLS for service-to-service",
+            "features": ["Bidirectional streaming", "Load balancing", "Circuit breaking"]
+          }
+        },
+        "security_model": {
+          "authentication": [
+            "JWT tokens with RSA/ECDSA signing",
+            "mTLS for service-to-service",
+            "API key for legacy clients",
+            "OAuth2/OIDC integration"
+          ],
+          "authorization": [
+            "Policy-based access control (via LLM-Policy-Engine)",
+            "Namespace-level permissions",
+            "Environment-based restrictions",
+            "Role-based access control (RBAC)"
+          ],
+          "encryption": [
+            "TLS 1.3 for all communications",
+            "End-to-end encryption for sensitive configs",
+            "Vault/KMS for key management",
+            "Encrypted cache at rest"
+          ]
+        },
+        "scalability": {
+          "target_scale": "Enterprise-wide deployment",
+          "concurrent_users": "10,000+ clients",
+          "throughput": "50,000+ req/s with caching",
+          "latency": "p50: <5ms (cached), p99: <50ms (vault miss)",
+          "availability": "99.99% uptime SLA"
+        },
+        "caching_strategy": {
+          "layers": [
+            "L1: In-memory LRU cache (per-instance)",
+            "L2: Distributed Redis cache (cluster-wide)",
+            "L3: Vault/KMS (source of truth)"
+          ],
+          "ttl": "Configurable per namespace (default: 5m)",
+          "invalidation": "Pub/sub based on Redis",
+          "consistency": "Eventual consistency with versioning"
+        }
+      },
+      {
+        "name": "Sidecar Integration Mode",
+        "architecture_type": "Container Sidecar Pattern",
+        "description": "Lightweight sidecar container running alongside application pods, providing local configuration caching and automatic refresh",
+        "components": [
+          "Minimal HTTP server for local queries",
+          "Configuration synchronization agent",
+          "Local file system cache",
+          "Health monitoring and auto-recovery",
+          "Unix domain socket for IPC"
+        ],
+        "deployment_model": {
+          "kubernetes": {
+            "deployment_type": "Sidecar container in application pods",
+            "injection": "Manual or admission webhook",
+            "resources": {
+              "requests": "64Mi memory, 50m CPU",
+              "limits": "256Mi memory, 200m CPU"
+            },
+            "volumes": [
+              "emptyDir for config cache",
+              "ConfigMap for sidecar config",
+              "Secret for vault credentials"
+            ],
+            "init_container": "Pre-populate cache before app starts"
+          },
+          "communication": [
+            "Unix domain sockets (lowest latency)",
+            "localhost HTTP (127.0.0.1:8080)",
+            "Shared volume (file-based)"
+          ]
+        },
+        "use_cases": [
+          "Low-latency config access for applications",
+          "Offline resilience with local caching",
+          "Zero code changes in application",
+          "Automatic configuration refresh",
+          "Kubernetes-native deployments",
+          "Multi-language application support"
+        ],
+        "advantages": [
+          "Sub-millisecond config access (local)",
+          "No network latency for cached configs",
+          "Automatic sync in background",
+          "Application remains unaware of config complexity",
+          "Works during network partitions",
+          "Language-agnostic (any app can use)"
+        ],
+        "considerations": [
+          "Additional resource overhead per pod",
+          "Increased pod startup time (cache pre-population)",
+          "Sidecar lifecycle management complexity",
+          "Debugging across multiple containers",
+          "Version skew between sidecar and app"
+        ],
+        "sync_strategy": {
+          "modes": [
+            "Polling: Periodic check for updates (configurable interval)",
+            "Push: WebSocket/gRPC streaming from central server",
+            "Hybrid: Polling with server-sent events for immediate updates"
+          ],
+          "default_interval": "30 seconds",
+          "jitter": "Random jitter to avoid thundering herd",
+          "backoff": "Exponential backoff on failures"
+        },
+        "cache_management": {
+          "storage": [
+            "In-memory cache for hot configs",
+            "File system cache for persistence",
+            "Memory-mapped files for large configs"
+          ],
+          "eviction": "LRU with size limits",
+          "warming": "Pre-fetch configs on startup",
+          "ttl": "Per-config TTL with background refresh"
+        },
+        "security_model": {
+          "authentication": "Pod service account token",
+          "authorization": "Namespace and pod-level restrictions",
+          "encryption": "Configs encrypted at rest in cache",
+          "isolation": "Process isolation, no shared state between apps"
+        },
+        "scalability": {
+          "target_scale": "Thousands of sidecars per cluster",
+          "pod_overhead": "~50-100Mi memory per sidecar",
+          "latency": "p99: <1ms for cached reads",
+          "sync_load": "Distributed with jitter to avoid spikes"
+        }
+      },
+      {
+        "name": "Hybrid Deployment",
+        "architecture_type": "Multi-Mode",
+        "description": "Combination of microservice API server with optional sidecar injection for high-performance applications",
+        "components": [
+          "Central API server (primary)",
+          "Sidecar agents (optional, per-application)",
+          "CLI tool for administration",
+          "Edge caching layer (optional)"
+        ],
+        "deployment_model": {
+          "architecture": {
+            "central": "Microservice API server (3+ replicas)",
+            "edge": "Sidecar containers in critical pods",
+            "admin": "CLI tool for operations",
+            "cdn": "Optional edge cache (Cloudflare Workers, AWS Lambda@Edge)"
+          },
+          "routing": {
+            "low_latency_apps": "Use sidecar for p99 <5ms",
+            "standard_apps": "Direct API calls to central server",
+            "admin_ops": "CLI tool for management",
+            "public_configs": "Edge cache for geo-distribution"
+          }
+        },
+        "use_cases": [
+          "Large-scale deployments with mixed requirements",
+          "Cost optimization (sidecars only where needed)",
+          "Progressive migration from one mode to another",
+          "Multi-region deployments",
+          "Hybrid cloud environments"
+        ],
+        "advantages": [
+          "Best of both worlds (centralization + performance)",
+          "Flexible deployment per application needs",
+          "Cost-effective resource utilization",
+          "Gradual adoption and migration",
+          "Supports diverse application requirements"
+        ],
+        "decision_tree": {
+          "use_sidecar_if": [
+            "Application requires p99 latency <5ms",
+            "High read volume (>1000 req/s per pod)",
+            "Critical path operations depend on config",
+            "Offline resilience required"
+          ],
+          "use_central_api_if": [
+            "Moderate latency acceptable (<50ms)",
+            "Low to medium read volume",
+            "Strong consistency required",
+            "Simplified operations preferred"
+          ],
+          "use_cli_for": [
+            "Administrative operations",
+            "CI/CD integration",
+            "Manual interventions",
+            "Development workflows"
+          ]
+        },
+        "scalability": {
+          "target_scale": "Global deployments, 100K+ clients",
+          "cost_optimization": "Sidecars only for <5% of pods needing ultra-low latency",
+          "flexibility": "Per-application decision on deployment mode"
+        }
+      }
+    ],
+    "component_diagram": {
+      "layers": {
+        "presentation_layer": {
+          "components": [
+            {
+              "name": "REST API",
+              "framework": "axum",
+              "responsibilities": [
+                "HTTP request handling",
+                "Authentication/authorization",
+                "Request validation",
+                "Response formatting"
+              ],
+              "endpoints": [
+                "/api/v1/configs",
+                "/api/v1/secrets",
+                "/api/v1/policies",
+                "/api/v1/audit",
+                "/health",
+                "/metrics"
+              ]
+            },
+            {
+              "name": "gRPC API",
+              "framework": "tonic",
+              "responsibilities": [
+                "Service-to-service communication",
+                "Streaming configuration updates",
+                "High-performance binary protocol"
+              ],
+              "services": [
+                "ConfigService",
+                "WatchService",
+                "ValidateService",
+                "AuditService"
+              ]
+            },
+            {
+              "name": "CLI Interface",
+              "framework": "clap + ratatui",
+              "responsibilities": [
+                "Command-line operations",
+                "Interactive TUI",
+                "Batch operations",
+                "Administrative tasks"
+              ],
+              "commands": [
+                "config get/set/list",
+                "secret create/rotate",
+                "policy validate",
+                "audit query",
+                "namespace create"
+              ]
+            }
+          ]
+        },
+        "application_layer": {
+          "components": [
+            {
+              "name": "Configuration Engine",
+              "responsibilities": [
+                "Configuration resolution and merging",
+                "Environment-specific overrides",
+                "Template rendering",
+                "Validation against schemas",
+                "Version management"
+              ],
+              "subcomponents": [
+                "ConfigResolver: Hierarchical config resolution",
+                "TemplateEngine: Variable substitution and templating",
+                "Validator: Schema and business rule validation",
+                "VersionManager: Version control and history"
+              ]
+            },
+            {
+              "name": "Secrets Manager",
+              "responsibilities": [
+                "Secret encryption/decryption",
+                "Key rotation",
+                "Secret lifecycle management",
+                "Envelope encryption coordination"
+              ],
+              "subcomponents": [
+                "EncryptionService: AES-GCM/ChaCha20-Poly1305 encryption",
+                "KeyManager: KEK management and rotation",
+                "SecretStore: In-memory secure storage"
+              ]
+            },
+            {
+              "name": "Policy Engine Integration",
+              "responsibilities": [
+                "RBAC enforcement",
+                "Policy validation",
+                "Access control decisions",
+                "Integration with LLM-Policy-Engine"
+              ],
+              "subcomponents": [
+                "RBACEnforcer: Role-based access control",
+                "PolicyValidator: Policy syntax and semantic validation",
+                "PolicyClient: Communication with policy engine"
+              ]
+            },
+            {
+              "name": "Audit Logger",
+              "responsibilities": [
+                "Event capture and logging",
+                "Audit trail persistence",
+                "Log integrity verification",
+                "Query and reporting"
+              ],
+              "events": [
+                "config_read",
+                "config_write",
+                "config_delete",
+                "secret_access",
+                "policy_violation",
+                "authentication",
+                "authorization_failure"
+              ]
+            },
+            {
+              "name": "Cache Manager",
+              "responsibilities": [
+                "Multi-tier caching",
+                "Cache invalidation",
+                "Consistency management",
+                "Performance optimization"
+              ],
+              "tiers": [
+                "L1: In-memory LRU cache",
+                "L2: Redis distributed cache",
+                "L3: Local disk cache (sled)"
+              ]
+            }
+          ]
+        },
+        "integration_layer": {
+          "components": [
+            {
+              "name": "Vault Integration Adapter",
+              "backend": "HashiCorp Vault",
+              "client": "vaultrs",
+              "responsibilities": [
+                "Vault authentication",
+                "KV secrets read/write",
+                "Dynamic secrets",
+                "Transit encryption",
+                "Connection pooling"
+              ],
+              "auth_methods": ["AppRole", "Token", "Kubernetes", "JWT/OIDC"]
+            },
+            {
+              "name": "Cloud KMS Adapters",
+              "implementations": [
+                {
+                  "provider": "AWS KMS",
+                  "client": "rusoto_kms",
+                  "operations": ["Encrypt", "Decrypt", "GenerateDataKey", "DescribeKey"]
+                },
+                {
+                  "provider": "GCP Cloud KMS",
+                  "client": "google-cloudkms1",
+                  "operations": ["Encrypt", "Decrypt", "AsymmetricSign", "AsymmetricVerify"]
+                },
+                {
+                  "provider": "Azure Key Vault",
+                  "client": "azure_security_keyvault",
+                  "operations": ["Encrypt", "Decrypt", "Sign", "Verify", "WrapKey", "UnwrapKey"]
+                }
+              ],
+              "responsibilities": [
+                "Envelope encryption",
+                "Key management",
+                "Cross-region replication",
+                "Failover handling"
+              ]
+            },
+            {
+              "name": "Policy Engine Adapter",
+              "integration_with": "LLM-Policy-Engine",
+              "protocol": "gRPC",
+              "responsibilities": [
+                "Policy evaluation requests",
+                "RBAC rule synchronization",
+                "Permission caching",
+                "Policy change notifications"
+              ]
+            },
+            {
+              "name": "Governance Dashboard Adapter",
+              "integration_with": "LLM-Governance-Dashboard",
+              "protocol": "HTTP/REST + WebSocket",
+              "responsibilities": [
+                "Real-time metrics streaming",
+                "Audit log export",
+                "Configuration visualization data",
+                "Alert notifications"
+              ]
+            },
+            {
+              "name": "Observatory Integration",
+              "integration_with": "LLM-Observatory",
+              "responsibilities": [
+                "Metrics export (Prometheus format)",
+                "Tracing data (OpenTelemetry)",
+                "Health status reporting",
+                "Performance telemetry"
+              ]
+            },
+            {
+              "name": "Edge Agent Integration",
+              "integration_with": "LLM-Edge-Agent",
+              "responsibilities": [
+                "Edge configuration distribution",
+                "Offline-first sync protocol",
+                "Conflict resolution",
+                "Bandwidth optimization"
+              ]
+            }
+          ]
+        },
+        "data_layer": {
+          "components": [
+            {
+              "name": "Primary Storage",
+              "type": "External (Vault/KMS)",
+              "purpose": "Source of truth for secrets and encrypted configs"
+            },
+            {
+              "name": "Metadata Store",
+              "type": "PostgreSQL (via sqlx)",
+              "schema": [
+                "configurations",
+                "namespaces",
+                "versions",
+                "audit_logs",
+                "policies",
+                "rbac_roles",
+                "rbac_permissions"
+              ],
+              "responsibilities": [
+                "Configuration metadata",
+                "Version history",
+                "Audit trails",
+                "Access control data"
+              ]
+            },
+            {
+              "name": "Cache Layer",
+              "types": [
+                {
+                  "name": "Redis",
+                  "purpose": "Distributed cache",
+                  "persistence": "RDB + AOF"
+                },
+                {
+                  "name": "Sled",
+                  "purpose": "Embedded local cache",
+                  "persistence": "Disk-backed"
+                }
+              ]
+            }
+          ]
+        },
+        "infrastructure_layer": {
+          "components": [
+            {
+              "name": "Connection Pool Manager",
+              "responsibilities": [
+                "Database connection pooling",
+                "HTTP client connection reuse",
+                "Circuit breaking",
+                "Retry logic"
+              ]
+            },
+            {
+              "name": "Observability",
+              "components": [
+                "Tracing (tracing + tracing-subscriber)",
+                "Metrics (metrics + prometheus exporter)",
+                "Logging (structured JSON logs)",
+                "Health checks (liveness, readiness)"
+              ]
+            },
+            {
+              "name": "Security",
+              "components": [
+                "TLS termination (rustls)",
+                "Certificate management",
+                "Key rotation scheduler",
+                "Security headers middleware"
+              ]
+            }
+          ]
+        }
+      },
+      "data_flow": {
+        "config_read_path": [
+          "1. Client sends GET /configs/{namespace}/{key}",
+          "2. REST API authenticates and authorizes request",
+          "3. Cache Manager checks L1 (in-memory) cache",
+          "4. If miss, check L2 (Redis) cache",
+          "5. If miss, fetch from Vault via adapter",
+          "6. Decrypt if encrypted, validate schema",
+          "7. Store in L2 and L1 caches",
+          "8. Return to client",
+          "9. Log audit event"
+        ],
+        "config_write_path": [
+          "1. Client sends POST /configs/{namespace}/{key}",
+          "2. REST API authenticates and authorizes request",
+          "3. Policy Engine validates write permission",
+          "4. Configuration Engine validates schema",
+          "5. Secrets Manager encrypts sensitive fields",
+          "6. Vault Adapter writes to Vault",
+          "7. Metadata Store saves version and metadata",
+          "8. Cache invalidation broadcast via Redis pub/sub",
+          "9. All cache layers invalidated",
+          "10. Audit Logger records write event",
+          "11. Governance Dashboard notified"
+        ],
+        "secret_rotation_path": [
+          "1. Scheduler triggers rotation for expired secret",
+          "2. Secrets Manager generates new secret",
+          "3. Cloud KMS generates new DEK (data encryption key)",
+          "4. Re-encrypt secret with new DEK",
+          "5. Store new secret version in Vault",
+          "6. Update metadata with rotation timestamp",
+          "7. Invalidate all caches",
+          "8. Notify dependent services",
+          "9. Log rotation event"
+        ]
+      }
+    },
+    "data_models": {
+      "configuration_schema": {
+        "Configuration": {
+          "description": "Root configuration object",
+          "fields": [
+            {
+              "name": "id",
+              "type": "UUID",
+              "description": "Unique identifier"
+            },
+            {
+              "name": "namespace",
+              "type": "String",
+              "description": "Namespace hierarchy (e.g., 'production/ml-service')",
+              "validation": "^[a-z0-9-]+(/[a-z0-9-]+)*$"
+            },
+            {
+              "name": "key",
+              "type": "String",
+              "description": "Configuration key",
+              "validation": "^[a-z0-9_.-]+$"
+            },
+            {
+              "name": "value",
+              "type": "ConfigValue",
+              "description": "Configuration value (can be nested)"
+            },
+            {
+              "name": "value_type",
+              "type": "Enum",
+              "values": ["String", "Number", "Boolean", "Object", "Array", "Secret"],
+              "description": "Type of the configuration value"
+            },
+            {
+              "name": "encrypted",
+              "type": "Boolean",
+              "description": "Whether value is encrypted"
+            },
+            {
+              "name": "encryption_key_id",
+              "type": "String (optional)",
+              "description": "KMS key ID used for encryption"
+            },
+            {
+              "name": "schema_version",
+              "type": "String",
+              "description": "Schema version for validation"
+            },
+            {
+              "name": "metadata",
+              "type": "ConfigMetadata",
+              "description": "Associated metadata"
+            },
+            {
+              "name": "tags",
+              "type": "HashMap<String, String>",
+              "description": "Key-value tags for organization"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTime<Utc>",
+              "description": "Creation timestamp"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTime<Utc>",
+              "description": "Last update timestamp"
+            },
+            {
+              "name": "created_by",
+              "type": "String",
+              "description": "User/service that created config"
+            },
+            {
+              "name": "updated_by",
+              "type": "String",
+              "description": "User/service that last updated config"
+            }
+          ],
+          "indexes": [
+            "PRIMARY KEY (id)",
+            "UNIQUE INDEX (namespace, key)",
+            "INDEX (namespace)",
+            "INDEX (created_at)",
+            "INDEX (tags) USING GIN"
+          ]
+        },
+        "ConfigValue": {
+          "description": "Union type representing different value types",
+          "variants": [
+            {
+              "name": "String",
+              "type": "String"
+            },
+            {
+              "name": "Number",
+              "type": "f64 | i64"
+            },
+            {
+              "name": "Boolean",
+              "type": "bool"
+            },
+            {
+              "name": "Object",
+              "type": "HashMap<String, ConfigValue>"
+            },
+            {
+              "name": "Array",
+              "type": "Vec<ConfigValue>"
+            },
+            {
+              "name": "Secret",
+              "type": "EncryptedValue"
+            }
+          ]
+        },
+        "EncryptedValue": {
+          "description": "Encrypted configuration value",
+          "fields": [
+            {
+              "name": "ciphertext",
+              "type": "Vec<u8>",
+              "description": "Encrypted data"
+            },
+            {
+              "name": "nonce",
+              "type": "Vec<u8>",
+              "description": "Encryption nonce/IV"
+            },
+            {
+              "name": "algorithm",
+              "type": "Enum",
+              "values": ["AES256-GCM", "ChaCha20-Poly1305"],
+              "description": "Encryption algorithm used"
+            },
+            {
+              "name": "key_id",
+              "type": "String",
+              "description": "Reference to encryption key"
+            },
+            {
+              "name": "envelope",
+              "type": "Option<EnvelopeData>",
+              "description": "Envelope encryption metadata"
+            }
+          ]
+        },
+        "EnvelopeData": {
+          "description": "Envelope encryption details",
+          "fields": [
+            {
+              "name": "encrypted_dek",
+              "type": "Vec<u8>",
+              "description": "Encrypted data encryption key"
+            },
+            {
+              "name": "kek_id",
+              "type": "String",
+              "description": "Key encryption key identifier"
+            },
+            {
+              "name": "kms_provider",
+              "type": "Enum",
+              "values": ["AWS_KMS", "GCP_KMS", "Azure_KeyVault", "Vault"],
+              "description": "KMS provider"
+            }
+          ]
+        },
+        "ConfigMetadata": {
+          "description": "Configuration metadata",
+          "fields": [
+            {
+              "name": "description",
+              "type": "String",
+              "description": "Human-readable description"
+            },
+            {
+              "name": "owner",
+              "type": "String",
+              "description": "Team or service owning this config"
+            },
+            {
+              "name": "environment",
+              "type": "Environment",
+              "description": "Target environment"
+            },
+            {
+              "name": "ttl",
+              "type": "Option<Duration>",
+              "description": "Time-to-live for caching"
+            },
+            {
+              "name": "sensitivity",
+              "type": "Enum",
+              "values": ["Public", "Internal", "Confidential", "Secret"],
+              "description": "Data sensitivity classification"
+            },
+            {
+              "name": "compliance_tags",
+              "type": "Vec<String>",
+              "description": "Compliance requirements (PCI, HIPAA, SOC2)"
+            },
+            {
+              "name": "readonly",
+              "type": "Boolean",
+              "description": "Whether config is read-only"
+            },
+            {
+              "name": "deprecated",
+              "type": "Boolean",
+              "description": "Whether config is deprecated"
+            },
+            {
+              "name": "deprecation_date",
+              "type": "Option<DateTime<Utc>>",
+              "description": "When config will be removed"
+            }
+          ]
+        }
+      },
+      "namespace_organization": {
+        "Namespace": {
+          "description": "Hierarchical namespace for organizing configurations",
+          "fields": [
+            {
+              "name": "id",
+              "type": "UUID",
+              "description": "Unique identifier"
+            },
+            {
+              "name": "path",
+              "type": "String",
+              "description": "Full namespace path (e.g., 'prod/ml-service/inference')",
+              "validation": "Hierarchical, slash-separated"
+            },
+            {
+              "name": "parent_id",
+              "type": "Option<UUID>",
+              "description": "Parent namespace (null for root)"
+            },
+            {
+              "name": "name",
+              "type": "String",
+              "description": "Namespace name (last segment of path)"
+            },
+            {
+              "name": "metadata",
+              "type": "NamespaceMetadata",
+              "description": "Namespace metadata"
+            },
+            {
+              "name": "permissions",
+              "type": "Vec<Permission>",
+              "description": "Access control permissions"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTime<Utc>",
+              "description": "Creation timestamp"
+            }
+          ],
+          "hierarchy_example": [
+            "/ (root)",
+            "├── production/",
+            "│   ├── ml-service/",
+            "│   │   ├── inference/",
+            "│   │   ├── training/",
+            "│   │   └── monitoring/",
+            "│   └── api-gateway/",
+            "├── staging/",
+            "└── development/"
+          ]
+        },
+        "NamespaceMetadata": {
+          "fields": [
+            {
+              "name": "description",
+              "type": "String"
+            },
+            {
+              "name": "owner_team",
+              "type": "String"
+            },
+            {
+              "name": "contacts",
+              "type": "Vec<String>",
+              "description": "Email addresses"
+            },
+            {
+              "name": "cost_center",
+              "type": "Option<String>"
+            },
+            {
+              "name": "tags",
+              "type": "HashMap<String, String>"
+            }
+          ]
+        }
+      },
+      "environment_hierarchy": {
+        "Environment": {
+          "description": "Deployment environment with inheritance",
+          "fields": [
+            {
+              "name": "name",
+              "type": "String",
+              "description": "Environment name",
+              "examples": ["development", "staging", "production"]
+            },
+            {
+              "name": "tier",
+              "type": "Enum",
+              "values": ["Development", "Test", "Staging", "Production"],
+              "description": "Environment tier"
+            },
+            {
+              "name": "parent",
+              "type": "Option<String>",
+              "description": "Parent environment for inheritance"
+            },
+            {
+              "name": "promotion_order",
+              "type": "u32",
+              "description": "Order in promotion pipeline"
+            },
+            {
+              "name": "auto_promote",
+              "type": "Boolean",
+              "description": "Whether configs auto-promote from parent"
+            },
+            {
+              "name": "require_approval",
+              "type": "Boolean",
+              "description": "Whether changes require approval"
+            },
+            {
+              "name": "approvers",
+              "type": "Vec<String>",
+              "description": "List of users who can approve"
+            }
+          ],
+          "inheritance_chain": [
+            "base → development → staging → production",
+            "Config resolution: production (specific) → staging → development → base (defaults)"
+          ]
+        },
+        "EnvironmentConfig": {
+          "description": "Environment-specific configuration overrides",
+          "fields": [
+            {
+              "name": "environment",
+              "type": "String"
+            },
+            {
+              "name": "overrides",
+              "type": "HashMap<String, ConfigValue>",
+              "description": "Environment-specific overrides"
+            },
+            {
+              "name": "inherited_from",
+              "type": "Option<String>",
+              "description": "Parent environment"
+            }
+          ]
+        }
+      },
+      "version_history": {
+        "ConfigVersion": {
+          "description": "Version history entry for configuration",
+          "fields": [
+            {
+              "name": "id",
+              "type": "UUID",
+              "description": "Version identifier"
+            },
+            {
+              "name": "config_id",
+              "type": "UUID",
+              "description": "Reference to configuration"
+            },
+            {
+              "name": "version_number",
+              "type": "u64",
+              "description": "Monotonically increasing version"
+            },
+            {
+              "name": "value",
+              "type": "ConfigValue",
+              "description": "Value at this version"
+            },
+            {
+              "name": "change_type",
+              "type": "Enum",
+              "values": ["Create", "Update", "Delete", "Restore"],
+              "description": "Type of change"
+            },
+            {
+              "name": "changed_by",
+              "type": "String",
+              "description": "User/service who made change"
+            },
+            {
+              "name": "changed_at",
+              "type": "DateTime<Utc>",
+              "description": "When change occurred"
+            },
+            {
+              "name": "change_reason",
+              "type": "Option<String>",
+              "description": "Reason for change (commit message)"
+            },
+            {
+              "name": "diff",
+              "type": "Option<String>",
+              "description": "JSON patch showing differences"
+            },
+            {
+              "name": "git_commit",
+              "type": "Option<String>",
+              "description": "Git commit hash if GitOps-managed"
+            },
+            {
+              "name": "rollback_to",
+              "type": "Option<UUID>",
+              "description": "Version ID if this is a rollback"
+            }
+          ],
+          "indexes": [
+            "PRIMARY KEY (id)",
+            "INDEX (config_id, version_number)",
+            "INDEX (changed_at)",
+            "INDEX (changed_by)"
+          ]
+        },
+        "VersionQuery": {
+          "description": "Query parameters for version history",
+          "fields": [
+            {
+              "name": "config_id",
+              "type": "UUID"
+            },
+            {
+              "name": "from_version",
+              "type": "Option<u64>"
+            },
+            {
+              "name": "to_version",
+              "type": "Option<u64>"
+            },
+            {
+              "name": "from_date",
+              "type": "Option<DateTime<Utc>>"
+            },
+            {
+              "name": "to_date",
+              "type": "Option<DateTime<Utc>>"
+            },
+            {
+              "name": "changed_by",
+              "type": "Option<String>"
+            },
+            {
+              "name": "limit",
+              "type": "u32"
+            }
+          ]
+        }
+      },
+      "secret_types": {
+        "Secret": {
+          "description": "Secret value with rotation and expiry",
+          "fields": [
+            {
+              "name": "id",
+              "type": "UUID",
+              "description": "Secret identifier"
+            },
+            {
+              "name": "namespace",
+              "type": "String",
+              "description": "Namespace path"
+            },
+            {
+              "name": "key",
+              "type": "String",
+              "description": "Secret key"
+            },
+            {
+              "name": "secret_type",
+              "type": "SecretType",
+              "description": "Type of secret"
+            },
+            {
+              "name": "encrypted_value",
+              "type": "EncryptedValue",
+              "description": "Encrypted secret value"
+            },
+            {
+              "name": "rotation_policy",
+              "type": "RotationPolicy",
+              "description": "Automatic rotation policy"
+            },
+            {
+              "name": "expires_at",
+              "type": "Option<DateTime<Utc>>",
+              "description": "Expiration timestamp"
+            },
+            {
+              "name": "metadata",
+              "type": "SecretMetadata",
+              "description": "Secret metadata"
+            }
+          ]
+        },
+        "SecretType": {
+          "description": "Type of secret",
+          "variants": [
+            {
+              "name": "GenericSecret",
+              "description": "Arbitrary secret value"
+            },
+            {
+              "name": "ApiKey",
+              "fields": ["provider", "scopes"]
+            },
+            {
+              "name": "DatabaseCredentials",
+              "fields": ["host", "port", "database", "username", "password"]
+            },
+            {
+              "name": "Certificate",
+              "fields": ["cert_pem", "private_key_pem", "ca_chain"]
+            },
+            {
+              "name": "SSH_Key",
+              "fields": ["public_key", "private_key"]
+            },
+            {
+              "name": "OAuth_Token",
+              "fields": ["access_token", "refresh_token", "expires_in"]
+            },
+            {
+              "name": "JWT_SigningKey",
+              "fields": ["algorithm", "public_key", "private_key"]
+            }
+          ]
+        },
+        "RotationPolicy": {
+          "description": "Secret rotation policy",
+          "fields": [
+            {
+              "name": "enabled",
+              "type": "Boolean"
+            },
+            {
+              "name": "interval",
+              "type": "Duration",
+              "description": "Rotation interval (e.g., 90 days)"
+            },
+            {
+              "name": "auto_rotate",
+              "type": "Boolean",
+              "description": "Whether to automatically rotate"
+            },
+            {
+              "name": "grace_period",
+              "type": "Duration",
+              "description": "Old secret remains valid for grace period"
+            },
+            {
+              "name": "last_rotated",
+              "type": "DateTime<Utc>"
+            },
+            {
+              "name": "next_rotation",
+              "type": "DateTime<Utc>"
+            },
+            {
+              "name": "rotation_notification",
+              "type": "Vec<String>",
+              "description": "Email addresses to notify on rotation"
+            }
+          ]
+        },
+        "SecretMetadata": {
+          "fields": [
+            {
+              "name": "description",
+              "type": "String"
+            },
+            {
+              "name": "owner",
+              "type": "String"
+            },
+            {
+              "name": "access_count",
+              "type": "u64",
+              "description": "Number of times accessed"
+            },
+            {
+              "name": "last_accessed",
+              "type": "Option<DateTime<Utc>>"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTime<Utc>"
+            },
+            {
+              "name": "created_by",
+              "type": "String"
+            }
+          ]
+        }
+      },
+      "audit_and_rbac": {
+        "AuditLog": {
+          "description": "Audit trail entry",
+          "fields": [
+            {
+              "name": "id",
+              "type": "UUID"
+            },
+            {
+              "name": "timestamp",
+              "type": "DateTime<Utc>"
+            },
+            {
+              "name": "event_type",
+              "type": "AuditEventType"
+            },
+            {
+              "name": "actor",
+              "type": "Actor",
+              "description": "User or service performing action"
+            },
+            {
+              "name": "resource",
+              "type": "Resource",
+              "description": "Resource being accessed"
+            },
+            {
+              "name": "action",
+              "type": "String",
+              "description": "Action performed (read, write, delete)"
+            },
+            {
+              "name": "result",
+              "type": "Enum",
+              "values": ["Success", "Failure", "Denied"],
+              "description": "Outcome of action"
+            },
+            {
+              "name": "ip_address",
+              "type": "Option<String>"
+            },
+            {
+              "name": "user_agent",
+              "type": "Option<String>"
+            },
+            {
+              "name": "request_id",
+              "type": "String",
+              "description": "Correlation ID"
+            },
+            {
+              "name": "metadata",
+              "type": "HashMap<String, String>",
+              "description": "Additional context"
+            }
+          ]
+        },
+        "AuditEventType": {
+          "variants": [
+            "ConfigRead",
+            "ConfigWrite",
+            "ConfigDelete",
+            "SecretAccess",
+            "SecretRotation",
+            "PolicyViolation",
+            "Authentication",
+            "AuthorizationFailure",
+            "PermissionChange",
+            "NamespaceCreated",
+            "NamespaceDeleted"
+          ]
+        },
+        "Role": {
+          "description": "RBAC role definition",
+          "fields": [
+            {
+              "name": "id",
+              "type": "UUID"
+            },
+            {
+              "name": "name",
+              "type": "String",
+              "examples": ["admin", "developer", "viewer", "operator"]
+            },
+            {
+              "name": "description",
+              "type": "String"
+            },
+            {
+              "name": "permissions",
+              "type": "Vec<Permission>"
+            },
+            {
+              "name": "inherits_from",
+              "type": "Vec<UUID>",
+              "description": "Parent roles for inheritance"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTime<Utc>"
+            }
+          ]
+        },
+        "Permission": {
+          "description": "Granular permission",
+          "fields": [
+            {
+              "name": "resource",
+              "type": "String",
+              "description": "Resource pattern (e.g., 'configs:prod/*')"
+            },
+            {
+              "name": "actions",
+              "type": "Vec<Action>",
+              "description": "Allowed actions"
+            },
+            {
+              "name": "effect",
+              "type": "Enum",
+              "values": ["Allow", "Deny"],
+              "description": "Permission effect"
+            },
+            {
+              "name": "conditions",
+              "type": "Option<Vec<Condition>>",
+              "description": "Conditional permissions"
+            }
+          ]
+        },
+        "Action": {
+          "variants": [
+            "Read",
+            "Write",
+            "Delete",
+            "List",
+            "Approve",
+            "Rotate",
+            "Grant",
+            "Admin"
+          ]
+        },
+        "RoleBinding": {
+          "description": "Binds roles to users/services",
+          "fields": [
+            {
+              "name": "id",
+              "type": "UUID"
+            },
+            {
+              "name": "role_id",
+              "type": "UUID"
+            },
+            {
+              "name": "subject",
+              "type": "Subject",
+              "description": "User, service account, or group"
+            },
+            {
+              "name": "namespace",
+              "type": "String",
+              "description": "Namespace scope for this binding"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTime<Utc>"
+            },
+            {
+              "name": "expires_at",
+              "type": "Option<DateTime<Utc>>",
+              "description": "Temporary role binding expiry"
+            }
+          ]
+        }
+      }
+    },
+    "integration_patterns": {
+      "llm_policy_engine": {
+        "purpose": "Validation policies and RBAC enforcement",
+        "integration_type": "Synchronous gRPC",
+        "protocol": {
+          "transport": "gRPC over HTTP/2",
+          "auth": "mTLS",
+          "format": "Protocol Buffers"
+        },
+        "data_flow": [
+          {
+            "direction": "Config-Manager → Policy-Engine",
+            "operations": [
+              "EvaluatePermission(actor, resource, action) → Allow/Deny",
+              "ValidateConfiguration(config, schema, policies) → ValidationResult",
+              "GetEffectivePermissions(actor, namespace) → PermissionSet",
+              "CheckCompliance(config, compliance_tags) → ComplianceReport"
+            ]
+          },
+          {
+            "direction": "Policy-Engine → Config-Manager",
+            "operations": [
+              "OnPolicyChange(policy_id) → notification",
+              "OnRoleUpdate(role_id) → notification"
+            ]
+          }
+        ],
+        "caching": {
+          "permission_cache_ttl": "5 minutes",
+          "policy_cache_ttl": "10 minutes",
+          "invalidation": "Push-based via pub/sub"
+        },
+        "fallback": {
+          "on_policy_engine_unavailable": "Use cached permissions with limited TTL",
+          "fail_open": false,
+          "default_policy": "Deny all, allow read for authenticated users"
+        },
+        "patterns": [
+          {
+            "name": "Pre-request Authorization",
+            "description": "Check permissions before processing config operations",
+            "flow": [
+              "1. Receive config operation request",
+              "2. Extract actor and resource from request",
+              "3. Call Policy-Engine.EvaluatePermission()",
+              "4. If denied, return 403 Forbidden",
+              "5. If allowed, proceed with operation"
+            ]
+          },
+          {
+            "name": "Post-write Validation",
+            "description": "Validate configuration after write against policies",
+            "flow": [
+              "1. Configuration written to vault",
+              "2. Call Policy-Engine.ValidateConfiguration()",
+              "3. If validation fails, rollback or quarantine",
+              "4. Log validation results to audit log"
+            ]
+          },
+          {
+            "name": "Policy Synchronization",
+            "description": "Keep local policy cache synchronized",
+            "flow": [
+              "1. Policy-Engine publishes policy update event",
+              "2. Config-Manager receives notification",
+              "3. Invalidate local policy cache",
+              "4. Fetch updated policies lazily on next request"
+            ]
+          }
+        ]
+      },
+      "llm_governance_dashboard": {
+        "purpose": "Visibility and audit surfacing",
+        "integration_type": "Asynchronous HTTP/REST + WebSocket",
+        "protocol": {
+          "rest": "HTTP/REST for queries",
+          "realtime": "WebSocket for live updates",
+          "auth": "JWT tokens",
+          "format": "JSON"
+        },
+        "data_flow": [
+          {
+            "direction": "Config-Manager → Governance-Dashboard",
+            "operations": [
+              "StreamAuditLogs() → WebSocket stream",
+              "PushMetrics(metrics) → async",
+              "NotifyConfigChange(change_event) → async",
+              "NotifyPolicyViolation(violation) → async",
+              "ReportHealth(health_status) → async"
+            ]
+          },
+          {
+            "direction": "Governance-Dashboard → Config-Manager",
+            "operations": [
+              "QueryAuditLogs(filter) → paginated results",
+              "GetMetricsSummary() → aggregated metrics",
+              "GetConfigSnapshot(namespace) → current state",
+              "GetComplianceReport() → compliance status"
+            ]
+          }
+        ],
+        "event_streaming": {
+          "mechanism": "WebSocket with JSON messages",
+          "events": [
+            "config.created",
+            "config.updated",
+            "config.deleted",
+            "secret.accessed",
+            "secret.rotated",
+            "policy.violated",
+            "permission.denied",
+            "health.degraded"
+          ],
+          "batching": "Batch events every 1 second or 100 events",
+          "backpressure": "Drop oldest events if buffer exceeds 10,000"
+        },
+        "metrics_export": {
+          "endpoint": "POST /api/v1/metrics",
+          "frequency": "Every 30 seconds",
+          "format": "Prometheus-compatible JSON",
+          "metrics": [
+            "config_operations_total{operation, namespace, status}",
+            "secret_access_total{namespace, secret_type}",
+            "cache_hit_ratio{layer}",
+            "vault_latency_seconds{operation}",
+            "policy_evaluation_duration_seconds",
+            "active_configurations{namespace, environment}"
+          ]
+        },
+        "patterns": [
+          {
+            "name": "Event Sourcing to Dashboard",
+            "description": "All significant events pushed to dashboard",
+            "flow": [
+              "1. Config operation completes",
+              "2. Audit logger records event",
+              "3. Event published to WebSocket stream",
+              "4. Dashboard updates real-time views"
+            ]
+          },
+          {
+            "name": "On-Demand Reporting",
+            "description": "Dashboard queries for historical data",
+            "flow": [
+              "1. User requests compliance report in dashboard",
+              "2. Dashboard calls Config-Manager API",
+              "3. Config-Manager queries audit logs and metadata",
+              "4. Generate report and return"
+            ]
+          }
+        ]
+      },
+      "llm_observatory": {
+        "purpose": "Metrics, tracing, and observability",
+        "integration_type": "Pull-based metrics + Push-based tracing",
+        "protocol": {
+          "metrics": "Prometheus scraping (HTTP)",
+          "tracing": "OpenTelemetry over gRPC",
+          "logs": "Stdout JSON (collected by log shipper)"
+        },
+        "data_flow": [
+          {
+            "direction": "Observatory → Config-Manager",
+            "operations": [
+              "GET /metrics → Prometheus format metrics",
+              "Scrape every 15 seconds"
+            ]
+          },
+          {
+            "direction": "Config-Manager → Observatory",
+            "operations": [
+              "PushTraces(spans) → OpenTelemetry Collector",
+              "PushLogs(log_entries) → Fluentd/Vector"
+            ]
+          }
+        ],
+        "metrics": {
+          "endpoint": "/metrics",
+          "format": "Prometheus",
+          "categories": [
+            {
+              "name": "Request Metrics",
+              "metrics": [
+                "http_requests_total{method, path, status}",
+                "http_request_duration_seconds{method, path}",
+                "grpc_requests_total{service, method, status}",
+                "grpc_request_duration_seconds{service, method}"
+              ]
+            },
+            {
+              "name": "Application Metrics",
+              "metrics": [
+                "configs_total{namespace, environment}",
+                "secrets_total{namespace, type}",
+                "cache_hits_total{layer}",
+                "cache_misses_total{layer}",
+                "vault_operations_total{operation, status}",
+                "policy_evaluations_total{result}",
+                "audit_events_total{event_type}"
+              ]
+            },
+            {
+              "name": "System Metrics",
+              "metrics": [
+                "process_cpu_seconds_total",
+                "process_resident_memory_bytes",
+                "process_open_fds",
+                "tokio_workers_active"
+              ]
+            }
+          ]
+        },
+        "tracing": {
+          "library": "tracing + tracing-opentelemetry",
+          "sampling": "Always trace errors, 10% sampling for success",
+          "spans": [
+            "http_request{method, path, status}",
+            "vault_read{namespace, key}",
+            "vault_write{namespace, key}",
+            "cache_get{layer, key}",
+            "policy_evaluate{actor, resource, action}",
+            "db_query{table, operation}"
+          ],
+          "attributes": [
+            "request_id",
+            "actor",
+            "namespace",
+            "environment",
+            "tenant_id"
+          ]
+        },
+        "logging": {
+          "format": "JSON structured logs",
+          "levels": "ERROR, WARN, INFO, DEBUG, TRACE",
+          "fields": [
+            "timestamp",
+            "level",
+            "message",
+            "target",
+            "span",
+            "fields",
+            "request_id"
+          ]
+        }
+      },
+      "llm_edge_agent": {
+        "purpose": "Edge configuration distribution and offline support",
+        "integration_type": "Bidirectional gRPC streaming",
+        "protocol": {
+          "transport": "gRPC over HTTP/2 with TLS",
+          "auth": "mTLS + API key",
+          "format": "Protocol Buffers"
+        },
+        "data_flow": [
+          {
+            "direction": "Config-Manager → Edge-Agent",
+            "operations": [
+              "SyncConfigurations(namespace, version) → ConfigBatch",
+              "StreamUpdates() → bidirectional stream",
+              "GetConfigDiff(from_version, to_version) → Diff"
+            ]
+          },
+          {
+            "direction": "Edge-Agent → Config-Manager",
+            "operations": [
+              "ReportHealth(health) → ack",
+              "RequestSync(namespace) → sync initiated",
+              "ReportConflict(conflict) → resolution"
+            ]
+          }
+        ],
+        "sync_protocol": {
+          "mode": "Delta synchronization with version vectors",
+          "compression": "gzip for large config batches",
+          "deduplication": "Content-addressed storage with SHA-256",
+          "conflict_resolution": "Last-write-wins with version vectors",
+          "offline_support": true
+        },
+        "edge_caching": {
+          "storage": "Local sled database on edge device",
+          "max_cache_size": "100MB per agent",
+          "eviction": "LRU with priority based on access frequency",
+          "staleness_tolerance": "Up to 1 hour for non-critical configs"
+        },
+        "patterns": [
+          {
+            "name": "Incremental Sync",
+            "description": "Only sync changed configurations",
+            "flow": [
+              "1. Edge agent sends last known version",
+              "2. Config-Manager computes delta",
+              "3. Send compressed diff",
+              "4. Edge agent applies diff and updates version"
+            ]
+          },
+          {
+            "name": "Offline-First Operation",
+            "description": "Edge agents work during network partitions",
+            "flow": [
+              "1. Network partition occurs",
+              "2. Edge agent uses local cache",
+              "3. Queue local changes (if any)",
+              "4. On reconnection, sync bidirectionally",
+              "5. Resolve conflicts using version vectors"
+            ]
+          },
+          {
+            "name": "Selective Sync",
+            "description": "Edge agents only sync relevant namespaces",
+            "flow": [
+              "1. Edge agent registers with subscriptions",
+              "2. Only receive updates for subscribed namespaces",
+              "3. Reduces bandwidth and storage"
+            ]
+          }
+        ]
+      },
+      "llm_auto_optimizer": {
+        "purpose": "Configuration optimization feedback loop",
+        "integration_type": "Asynchronous REST API",
+        "protocol": {
+          "transport": "HTTP/REST",
+          "auth": "API key",
+          "format": "JSON"
+        },
+        "data_flow": [
+          {
+            "direction": "Auto-Optimizer → Config-Manager",
+            "operations": [
+              "ProposeConfigChange(namespace, key, new_value, justification) → change_request_id",
+              "GetCurrentConfig(namespace) → config_snapshot",
+              "GetConfigPerformanceMetrics(namespace) → metrics"
+            ]
+          },
+          {
+            "direction": "Config-Manager → Auto-Optimizer",
+            "operations": [
+              "NotifyConfigApplied(change_request_id, applied_at) → ack",
+              "NotifyConfigRejected(change_request_id, reason) → ack"
+            ]
+          }
+        ],
+        "optimization_workflow": {
+          "steps": [
+            "1. Auto-Optimizer analyzes system performance",
+            "2. Identifies suboptimal configurations",
+            "3. Proposes configuration changes to Config-Manager",
+            "4. Config-Manager validates against policies",
+            "5. If approved, applies change and notifies Auto-Optimizer",
+            "6. Auto-Optimizer monitors impact",
+            "7. If negative impact, rollback is triggered"
+          ],
+          "approval_modes": [
+            "Automatic (for non-production, low-risk changes)",
+            "Manual (for production, require human approval)",
+            "Dry-run (simulate but don't apply)"
+          ]
+        },
+        "patterns": [
+          {
+            "name": "Propose-Approve-Apply",
+            "description": "Safe configuration optimization with approval gates",
+            "flow": [
+              "1. Auto-Optimizer proposes change",
+              "2. Config-Manager validates and creates change request",
+              "3. Approval workflow triggered (if required)",
+              "4. On approval, apply change",
+              "5. Monitor for rollback conditions"
+            ]
+          },
+          {
+            "name": "A/B Testing Configurations",
+            "description": "Test optimized configs on subset of instances",
+            "flow": [
+              "1. Create A/B test configuration variants",
+              "2. Apply variant A to 90% of instances, variant B to 10%",
+              "3. Monitor performance metrics",
+              "4. If B outperforms A, promote to 100%"
+            ]
+          }
+        ]
+      }
+    },
+    "scalability_considerations": [
+      {
+        "dimension": "Read Throughput",
+        "target": "100,000+ reads/second",
+        "strategies": [
+          "Multi-tier caching (in-memory, Redis, local disk)",
+          "Read replicas for PostgreSQL metadata store",
+          "Content-delivery network for static/public configs",
+          "Horizontal scaling with stateless API servers",
+          "gRPC multiplexing for service-to-service calls"
+        ],
+        "bottlenecks": [
+          "Vault read throughput (mitigated by caching)",
+          "Redis single-instance limits (use Redis Cluster)",
+          "Database connection pool exhaustion (use connection pooling)"
+        ]
+      },
+      {
+        "dimension": "Write Throughput",
+        "target": "10,000+ writes/second",
+        "strategies": [
+          "Asynchronous vault writes with write-behind caching",
+          "Batch writes for bulk operations",
+          "Sharded PostgreSQL for audit logs",
+          "Async audit logging with buffering",
+          "Optimistic locking for concurrent updates"
+        ],
+        "bottlenecks": [
+          "Vault write throughput (Vault Enterprise clustering)",
+          "PostgreSQL write throughput (partitioning, sharding)",
+          "Audit log write volume (async with batching)"
+        ]
+      },
+      {
+        "dimension": "Storage Capacity",
+        "target": "Millions of configurations",
+        "strategies": [
+          "Vault as primary storage (unlimited in cloud KMS)",
+          "PostgreSQL partitioning by namespace and time",
+          "Compression for large configuration values",
+          "Archival of old versions to object storage (S3, GCS)",
+          "Deduplication using content addressing"
+        ],
+        "considerations": [
+          "Vault storage limits depend on backend (Consul, S3, etc.)",
+          "PostgreSQL table partitioning for audit logs (by month)",
+          "Retention policies for old versions (e.g., keep last 100 versions)"
+        ]
+      },
+      {
+        "dimension": "Geographic Distribution",
+        "target": "Multi-region, low-latency access",
+        "strategies": [
+          "Regional Config-Manager deployments",
+          "Vault replication (Vault Enterprise)",
+          "Redis replication across regions",
+          "Edge caching with CDN",
+          "Active-active multi-region with eventual consistency"
+        ],
+        "patterns": [
+          {
+            "name": "Active-Passive",
+            "description": "Primary region handles writes, passive for DR",
+            "consistency": "Strong consistency",
+            "latency": "Cross-region latency on failover"
+          },
+          {
+            "name": "Active-Active",
+            "description": "Multiple regions handle reads and writes",
+            "consistency": "Eventual consistency with conflict resolution",
+            "latency": "Local region latency"
+          },
+          {
+            "name": "Read Replicas",
+            "description": "Write to primary, read from nearest region",
+            "consistency": "Read-after-write consistency with lag",
+            "latency": "Local reads, cross-region writes"
+          }
+        ]
+      },
+      {
+        "dimension": "Tenant Isolation",
+        "target": "10,000+ tenants on shared infrastructure",
+        "strategies": [
+          "Namespace-based isolation",
+          "Per-tenant rate limiting",
+          "Separate vault paths per tenant",
+          "Tenant-aware caching (avoid cross-tenant leaks)",
+          "Resource quotas per tenant",
+          "Dedicated instances for high-value tenants"
+        ],
+        "security": [
+          "No shared cache keys between tenants",
+          "Tenant ID validation on every request",
+          "Separate encryption keys per tenant",
+          "Audit logging per tenant"
+        ]
+      },
+      {
+        "dimension": "Failover and High Availability",
+        "target": "99.99% uptime (52 minutes downtime/year)",
+        "strategies": [
+          "Multi-zone Kubernetes deployments",
+          "Stateless API servers (easy to scale and replace)",
+          "Redis Sentinel for cache HA",
+          "PostgreSQL streaming replication",
+          "Health checks and auto-recovery",
+          "Circuit breakers to prevent cascade failures",
+          "Graceful degradation (serve from cache if Vault unavailable)"
+        ],
+        "failure_modes": [
+          {
+            "failure": "Vault unavailable",
+            "mitigation": "Serve from Redis/local cache with TTL",
+            "impact": "Stale configs for TTL duration"
+          },
+          {
+            "failure": "PostgreSQL down",
+            "mitigation": "Failover to read replica, queue writes",
+            "impact": "Audit logging delayed"
+          },
+          {
+            "failure": "Redis down",
+            "mitigation": "Fall back to Vault (slower)",
+            "impact": "Higher latency, increased Vault load"
+          },
+          {
+            "failure": "Single API server down",
+            "mitigation": "Kubernetes auto-restarts, load balancer reroutes",
+            "impact": "Minimal (other replicas handle traffic)"
+          }
+        ]
+      },
+      {
+        "dimension": "Cost Optimization",
+        "target": "Minimize cloud costs at scale",
+        "strategies": [
+          "Aggressive caching to reduce Vault API calls",
+          "Compression for network transfer and storage",
+          "Spot instances for non-critical workloads",
+          "Auto-scaling based on load (scale down during off-hours)",
+          "Archival to cheaper storage tiers (S3 Glacier)",
+          "Right-sizing resources based on actual usage",
+          "Sidecar mode to reduce API server load"
+        ],
+        "monitoring": [
+          "Track cost per tenant",
+          "Monitor cache hit ratios (target >95%)",
+          "Alert on cost anomalies",
+          "Periodic cost optimization reviews"
+        ]
+      },
+      {
+        "dimension": "Operational Complexity",
+        "target": "Simple to deploy and operate",
+        "strategies": [
+          "Single-binary deployment (minimize dependencies)",
+          "Helm charts for Kubernetes",
+          "Terraform modules for infrastructure",
+          "Automated backups and DR testing",
+          "Runbooks for common operations",
+          "Self-service CLI for developers",
+          "Comprehensive observability (metrics, logs, traces)",
+          "Automated testing (unit, integration, load tests)"
+        ],
+        "day_2_operations": [
+          "Vault key rotation procedures",
+          "Database schema migrations (sqlx migrations)",
+          "Config-Manager version upgrades (blue/green deployments)",
+          "Disaster recovery drills",
+          "Security patching"
+        ]
+      }
+    ],
+    "security_architecture": {
+      "encryption": {
+        "at_rest": [
+          "All secrets encrypted with AES-256-GCM",
+          "Envelope encryption with KMS",
+          "Database encryption (PostgreSQL TDE)",
+          "Redis encryption (redis.conf requirepass + TLS)",
+          "Local cache encryption (sled with encrypted values)"
+        ],
+        "in_transit": [
+          "TLS 1.3 for all HTTP/gRPC communications",
+          "mTLS for service-to-service",
+          "Certificate pinning for critical connections",
+          "Perfect forward secrecy (PFS)"
+        ],
+        "key_management": [
+          "KEK (Key Encryption Key) managed by cloud KMS",
+          "DEK (Data Encryption Key) generated per-config",
+          "Automatic key rotation every 90 days",
+          "Old keys retained for decryption (key versioning)",
+          "Hardware Security Module (HSM) support via KMS"
+        ]
+      },
+      "authentication": {
+        "methods": [
+          "JWT tokens (RS256/ES256 signatures)",
+          "API keys (for legacy clients)",
+          "mTLS client certificates",
+          "OAuth2/OIDC (integration with enterprise IdP)",
+          "Kubernetes service account tokens"
+        ],
+        "token_lifecycle": [
+          "Short-lived access tokens (15 minutes)",
+          "Refresh tokens (7 days)",
+          "Token revocation support",
+          "Token rotation on suspicious activity"
+        ]
+      },
+      "authorization": {
+        "model": "Attribute-Based Access Control (ABAC) with RBAC foundation",
+        "enforcement_points": [
+          "API gateway (coarse-grained)",
+          "Application layer (fine-grained)",
+          "Policy Engine integration (complex rules)"
+        ],
+        "principles": [
+          "Principle of least privilege",
+          "Defense in depth (multiple layers)",
+          "Fail-safe defaults (deny by default)",
+          "Separation of duties"
+        ]
+      },
+      "audit_and_compliance": {
+        "audit_trail": [
+          "Immutable audit logs",
+          "Cryptographic log integrity (Merkle trees)",
+          "Tamper-evident log storage",
+          "Retention: 7 years for compliance"
+        ],
+        "compliance_frameworks": [
+          "SOC 2 Type II",
+          "PCI DSS",
+          "HIPAA",
+          "GDPR",
+          "ISO 27001"
+        ],
+        "controls": [
+          "Access logging for all config/secret operations",
+          "Data residency controls (geo-fencing)",
+          "Right to be forgotten (GDPR)",
+          "Encryption at rest and in transit",
+          "Regular security audits and penetration testing"
+        ]
+      },
+      "secrets_hygiene": {
+        "practices": [
+          "Never log secrets (redact from logs/traces)",
+          "Secrets never in git (enforce with pre-commit hooks)",
+          "Automatic secret scanning (TruffleHog, GitGuardian)",
+          "Secret rotation enforcement",
+          "Expiration warnings",
+          "Revocation on employee offboarding"
+        ]
+      }
+    },
+    "performance_targets": {
+      "latency": {
+        "config_read_cached": {
+          "p50": "< 1ms",
+          "p99": "< 5ms",
+          "p99.9": "< 10ms"
+        },
+        "config_read_vault": {
+          "p50": "< 20ms",
+          "p99": "< 50ms",
+          "p99.9": "< 100ms"
+        },
+        "config_write": {
+          "p50": "< 50ms",
+          "p99": "< 200ms",
+          "p99.9": "< 500ms"
+        },
+        "policy_evaluation": {
+          "p50": "< 5ms",
+          "p99": "< 20ms",
+          "p99.9": "< 50ms"
+        }
+      },
+      "throughput": {
+        "reads": "100,000+ req/s with caching",
+        "writes": "10,000+ req/s",
+        "cache_hit_ratio": "> 95%"
+      },
+      "resource_usage": {
+        "api_server": {
+          "memory": "512Mi - 2Gi (depending on cache size)",
+          "cpu": "0.5 - 2 cores"
+        },
+        "sidecar": {
+          "memory": "64Mi - 256Mi",
+          "cpu": "0.05 - 0.2 cores"
+        }
+      }
+    }
+  }
+}
