@@ -5,6 +5,12 @@ edition.workspace = true
 rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+description = "Role-Based Access Control (RBAC) system with fine-grained permissions, namespace isolation, and policy enforcement"
+keywords = ["rbac", "authorization", "access-control", "permissions", "security"]
+categories = ["authentication", "config"]
 
 [dependencies]
 serde = { workspace = true }

@@ -5,6 +5,12 @@ edition.workspace = true
 rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+description = "Persistent storage backend for LLM Config Manager using embedded Sled database with encryption support"
+keywords = ["storage", "database", "config", "persistence", "sled"]
+categories = ["database", "config"]
 
 [dependencies]
 llm-config-crypto = { path = "../llm-config-crypto" }

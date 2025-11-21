@@ -5,6 +5,12 @@ edition.workspace = true
 rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+description = "Comprehensive audit logging system with tamper-proof logs, change tracking, and compliance reporting"
+keywords = ["audit", "logging", "compliance", "tracking", "security"]
+categories = ["development-tools", "config"]
 
 [dependencies]
 llm-config-core = { path = "../llm-config-core" }

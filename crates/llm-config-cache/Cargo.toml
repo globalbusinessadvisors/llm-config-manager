@@ -5,6 +5,12 @@ edition.workspace = true
 rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+description = "Multi-tier caching system with L1/L2 cache support, TTL management, and cache invalidation strategies"
+keywords = ["cache", "caching", "performance", "memory", "config"]
+categories = ["caching", "config"]
 
 [dependencies]
 llm-config-core = { path = "../llm-config-core" }

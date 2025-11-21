@@ -5,6 +5,12 @@ edition.workspace = true
 rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+description = "REST API server for LLM Config Manager with JWT authentication, RBAC, rate limiting, and comprehensive security features"
+keywords = ["api", "rest", "server", "config", "axum"]
+categories = ["web-programming", "config"]
 
 [dependencies]
 llm-config-core = { path = "../llm-config-core" }

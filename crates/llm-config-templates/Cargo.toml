@@ -5,6 +5,12 @@ edition.workspace = true
 rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+description = "Configuration template system with variable substitution, inheritance, and environment-specific overrides"
+keywords = ["templates", "config", "substitution", "configuration", "variables"]
+categories = ["config", "template-engine"]
 
 [dependencies]
 llm-config-core = { path = "../llm-config-core" }

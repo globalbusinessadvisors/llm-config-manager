@@ -21,7 +21,9 @@ edition = "2021"
 rust-version = "1.75"
 authors = ["LLM DevOps Team"]
 license = "Apache-2.0"
-repository = "https://github.com/llm-devops/llm-config-manager"
+repository = "https://github.com/globalbusinessadvisors/llm-config-manager"
+homepage = "https://github.com/globalbusinessadvisors/llm-config-manager"
+documentation = "https://docs.rs/llm-config-manager"
 
 [workspace.dependencies]
 # Core dependencies

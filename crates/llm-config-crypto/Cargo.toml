@@ -5,6 +5,12 @@ edition.workspace = true
 rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+description = "Cryptography primitives for LLM Config Manager - AES-256-GCM encryption, key derivation, and secure key management"
+keywords = ["cryptography", "encryption", "security", "aes", "config"]
+categories = ["cryptography", "config"]
 
 [dependencies]
 ring = { workspace = true }

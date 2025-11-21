@@ -5,6 +5,12 @@ edition.workspace = true
 rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+description = "Prometheus-based metrics collection and export for monitoring configuration access, performance, and usage patterns"
+keywords = ["metrics", "monitoring", "prometheus", "observability", "telemetry"]
+categories = ["development-tools", "config"]
 
 [dependencies]
 prometheus = "0.13"

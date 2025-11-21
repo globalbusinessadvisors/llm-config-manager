@@ -5,6 +5,12 @@ edition.workspace = true
 rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+description = "Core configuration management library for LLM Config Manager with multi-environment support, versioning, and secret management"
+keywords = ["config", "configuration", "management", "llm", "environment"]
+categories = ["config", "development-tools"]
 
 [dependencies]
 llm-config-crypto = { path = "../llm-config-crypto" }

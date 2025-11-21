@@ -5,6 +5,12 @@ edition.workspace = true
 rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+description = "Command-line interface for LLM Config Manager with interactive prompts, colored output, and comprehensive configuration management"
+keywords = ["cli", "command-line", "config", "configuration", "management"]
+categories = ["command-line-utilities", "config"]
 
 [[bin]]
 name = "llm-config"

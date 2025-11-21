@@ -1,10 +1,16 @@
 [package]
 name = "llm-config-security"
-version = "1.0.0"
-edition = "2021"
-authors = ["LLM DevOps Team"]
-description = "Security hardening and validation for LLM Config Manager"
-license = "Apache-2.0"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+description = "Security hardening and validation for LLM Config Manager with input validation, rate limiting, and threat protection"
+keywords = ["security", "validation", "rate-limiting", "hardening", "config"]
+categories = ["authentication", "config"]
 
 [dependencies]
 # Core dependencies
