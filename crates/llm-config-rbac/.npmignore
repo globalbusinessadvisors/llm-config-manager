@@ -1,0 +1,20 @@
+# Source files
+src/
+benches/
+tests/
+examples/
+
+# Rust build artifacts
+target/
+Cargo.lock
+
+# Development files
+.gitignore
+.cargo/
+
+# Keep only the pkg directory (wasm-pack output)
+*
+!pkg/
+!package.json
+!README.md
+!LICENSE

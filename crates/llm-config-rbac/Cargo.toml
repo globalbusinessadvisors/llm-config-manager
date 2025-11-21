@@ -12,11 +12,15 @@ description = "Role-Based Access Control (RBAC) system with fine-grained permiss
 keywords = ["rbac", "authorization", "access-control", "permissions", "security"]
 categories = ["authentication", "config"]
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 anyhow = { workspace = true }
+wasm-bindgen = "0.2"
 
 [dev-dependencies]
 criterion = { workspace = true }

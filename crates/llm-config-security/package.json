@@ -1,0 +1,35 @@
+{
+  "name": "@llm-dev-ops/llm-security",
+  "version": "0.5.0",
+  "description": "Security hardening and validation for LLM Config Manager with input validation, rate limiting, and threat protection (WebAssembly)",
+  "main": "pkg/llm_config_security.js",
+  "types": "pkg/llm_config_security.d.ts",
+  "files": [
+    "pkg"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/globalbusinessadvisors/llm-config-manager.git",
+    "directory": "crates/llm-config-security"
+  },
+  "keywords": [
+    "security",
+    "validation",
+    "rate-limiting",
+    "input-validation",
+    "xss",
+    "sql-injection",
+    "wasm",
+    "webassembly",
+    "rust"
+  ],
+  "author": "LLM DevOps Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/globalbusinessadvisors/llm-config-manager/issues"
+  },
+  "homepage": "https://github.com/globalbusinessadvisors/llm-config-manager#readme",
+  "publishConfig": {
+    "access": "public"
+  }
+}

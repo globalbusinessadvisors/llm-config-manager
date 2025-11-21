@@ -1,0 +1,117 @@
+name: Publish to NPM
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to publish (crypto, rbac, security, or all)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - crypto
+          - rbac
+          - security
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  publish-wasm:
+    name: Build and Publish WASM Packages
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          - name: crypto
+            path: crates/llm-config-crypto
+            npm-name: '@llm-dev-ops/llm-crypto'
+          - name: rbac
+            path: crates/llm-config-rbac
+            npm-name: '@llm-dev-ops/llm-rbac'
+          - name: security
+            path: crates/llm-config-security
+            npm-name: '@llm-dev-ops/llm-security'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-wasm-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build WASM package
+        run: |
+          cd ${{ matrix.package.path }}
+          wasm-pack build --target web --release --scope llm-dev-ops
+
+      - name: Publish to NPM
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && (github.event.inputs.package == 'all' || github.event.inputs.package == matrix.package.name))
+        run: |
+          cd ${{ matrix.package.path }}/pkg
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Upload WASM artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.package.name }}-wasm
+          path: ${{ matrix.package.path }}/pkg/
+          retention-days: 7
+
+  publish-summary:
+    name: Publication Summary
+    needs: publish-wasm
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Summary
+        run: |
+          echo "## NPM Publication Complete 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Published packages:" >> $GITHUB_STEP_SUMMARY
+          echo "- @llm-dev-ops/llm-crypto" >> $GITHUB_STEP_SUMMARY
+          echo "- @llm-dev-ops/llm-rbac" >> $GITHUB_STEP_SUMMARY
+          echo "- @llm-dev-ops/llm-security" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Installation" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "npm install @llm-dev-ops/llm-crypto" >> $GITHUB_STEP_SUMMARY
+          echo "npm install @llm-dev-ops/llm-rbac" >> $GITHUB_STEP_SUMMARY
+          echo "npm install @llm-dev-ops/llm-security" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
