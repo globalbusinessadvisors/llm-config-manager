@@ -1,0 +1,22 @@
+{
+  "name": "@llm-dev-ops/llm-config-audit",
+  "version": "0.5.0",
+  "description": "Audit logging and compliance tracking (Rust crate - use via cargo or build from source)",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": ["index.js", "index.d.ts", "README.md"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/globalbusinessadvisors/llm-config-manager"
+  },
+  "keywords": ["rust", "llm", "config", "llm-config-audit"],
+  "author": "LLM DevOps Team",
+  "license": "Apache-2.0",
+  "rust": {
+    "crate": "llm-config-audit",
+    "installation": "cargo install llm-config-audit"
+  }
+}

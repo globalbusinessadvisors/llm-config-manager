@@ -15,6 +15,11 @@ categories = ["authentication", "config"]
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[features]
+default = ["async"]
+async = ["tokio", "async-trait"]
+wasm = ["wasm-bindgen", "getrandom/js"]
+
 [dependencies]
 # Core dependencies
 thiserror = "1.0"
@@ -42,16 +47,16 @@ nonzero_ext = "0.3"
 # Time
 chrono = { version = "0.4", features = ["serde"] }
 
-# Async
-tokio = { version = "1.35", features = ["full"] }
-async-trait = "0.1"
+# Async (optional for WASM)
+tokio = { version = "1.35", features = ["full"], optional = true }
+async-trait = { version = "0.1", optional = true }
 
 # Logging
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # WASM support
-wasm-bindgen = "0.2"
+wasm-bindgen = { version = "0.2", optional = true }
 getrandom = { version = "0.2", features = ["js"] }
 
 [dev-dependencies]

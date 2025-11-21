@@ -15,8 +15,13 @@ categories = ["cryptography", "config"]
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[features]
+default = ["ring-crypto"]
+ring-crypto = ["ring"]
+wasm = ["wasm-bindgen", "getrandom/js"]
+
 [dependencies]
-ring = { workspace = true }
+ring = { workspace = true, optional = true }
 chacha20poly1305 = { workspace = true }
 argon2 = { workspace = true }
 zeroize = { workspace = true }
@@ -27,7 +32,7 @@ serde_json = { workspace = true }
 hex = { workspace = true }
 base64 = { workspace = true }
 rand = "0.8"
-wasm-bindgen = "0.2"
+wasm-bindgen = { version = "0.2", optional = true }
 getrandom = { version = "0.2", features = ["js"] }
 
 [dev-dependencies]

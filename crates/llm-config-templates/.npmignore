@@ -1,0 +1,11 @@
+src/
+benches/
+tests/
+examples/
+target/
+Cargo.lock
+*
+!pkg/
+!package.json
+!README.md
+!LICENSE

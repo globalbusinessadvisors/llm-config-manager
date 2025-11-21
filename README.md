@@ -56,17 +56,151 @@ LLM Config Manager solves these challenges with an elegant, production-tested so
 - 🔍 **Monitoring**: Health checks, liveness/readiness probes
 - 📋 **Compliance**: SOC 2, ISO 27001, GDPR, HIPAA, PCI DSS ready
 
+## Package Availability
+
+LLM Config Manager is available on both **crates.io** (Rust) and **npm** (JavaScript/TypeScript):
+
+### 📦 Crates.io (Rust)
+
+All crates are published to crates.io and can be added to your `Cargo.toml`:
+
+```toml
+[dependencies]
+llm-config-core = "0.5.0"          # Core configuration management
+llm-config-crypto = "0.5.0"        # Cryptography primitives
+llm-config-rbac = "0.5.0"          # Role-based access control
+llm-config-security = "0.5.0"      # Security hardening
+llm-config-storage = "0.5.0"       # Storage backends
+llm-config-cache = "0.5.0"         # Multi-tier caching
+llm-config-audit = "0.5.0"         # Audit logging
+llm-config-templates = "0.5.0"     # Configuration templates
+llm-config-metrics = "0.5.0"       # Prometheus metrics
+llm-config-api = "0.5.0"           # REST API server
+llm-config-cli = "0.5.0"           # Command-line interface
+llm-config-devtools = "0.5.0"      # Security scanning tools
+```
+
+**Install CLI tools:**
+```bash
+cargo install llm-config-cli        # Main CLI
+cargo install llm-config-api        # API server
+cargo install llm-config-devtools   # Security scanners
+```
+
+### 🌐 NPM (JavaScript/TypeScript/WebAssembly)
+
+#### Functional WASM Packages (Browser + Node.js)
+
+These packages provide full JavaScript APIs compiled from Rust to WebAssembly:
+
+```bash
+npm install @llm-dev-ops/llm-config-rbac        # RBAC system
+npm install @llm-dev-ops/llm-config-crypto      # Cryptography (ChaCha20-Poly1305)
+npm install @llm-dev-ops/llm-config-security    # Input validation & security
+npm install @llm-dev-ops/llm-config-templates   # Template engine
+```
+
+**Usage Example:**
+```javascript
+import init, * as rbac from '@llm-dev-ops/llm-config-rbac';
+
+// Initialize WASM module
+await init();
+
+// Use RBAC
+const manager = rbac.RBACManager.new();
+manager.create_role('admin', ['read', 'write', 'delete']);
+manager.assign_role('user123', 'admin', 'production');
+
+if (manager.can_write('user123', 'config.key', 'production')) {
+  console.log('User has write permission');
+}
+```
+
+**TypeScript Support:**
+```typescript
+import init, * as crypto from '@llm-dev-ops/llm-config-crypto';
+
+async function encrypt(data: Uint8Array, key: Uint8Array): Promise<Uint8Array> {
+  await init();
+  return crypto.encrypt(data, key);
+}
+```
+
+#### Reference Packages (Rust Crate References)
+
+These packages provide npm discoverability with installation instructions:
+
+```bash
+npm install @llm-dev-ops/llm-config-storage              # Sled database backend
+npm install @llm-dev-ops/llm-config-core                 # Core library
+npm install @llm-dev-ops/llm-config-cache                # Caching layer
+npm install @llm-dev-ops/llm-config-audit                # Audit logging
+npm install @llm-dev-ops/llm-config-metrics              # Prometheus metrics
+npm install @llm-dev-ops/llm-config-api                  # HTTP API server
+npm install @llm-dev-ops/llm-config-cli                  # CLI tool
+npm install @llm-dev-ops/llm-config-devtools             # Security tools
+npm install @llm-dev-ops/llm-config-integration-tests    # Test utilities
+```
+
+**Note**: Reference packages point to the Rust crates and require Rust toolchain for full functionality.
+
+### 📊 Package Summary
+
+| Package | crates.io | npm (WASM) | npm (Ref) | Browser | Node.js |
+|---------|-----------|------------|-----------|---------|---------|
+| **crypto** | ✅ | ✅ | - | ✅ | ✅ |
+| **rbac** | ✅ | ✅ | - | ✅ | ✅ |
+| **security** | ✅ | ✅ | - | ✅ | ✅ |
+| **templates** | ✅ | ✅ | - | ✅ | ✅ |
+| **storage** | ✅ | - | ✅ | ❌ | 🔧 |
+| **core** | ✅ | - | ✅ | ❌ | 🔧 |
+| **cache** | ✅ | - | ✅ | ❌ | 🔧 |
+| **audit** | ✅ | - | ✅ | ❌ | 🔧 |
+| **metrics** | ✅ | - | ✅ | ❌ | 🔧 |
+| **api** | ✅ | - | ✅ | ❌ | 🔧 |
+| **cli** | ✅ | - | ✅ | ❌ | 🔧 |
+| **devtools** | ✅ | - | ✅ | ❌ | 🔧 |
+| **integration-tests** | ✅ | - | ✅ | ❌ | 🔧 |
+
+**Legend**: ✅ Full support | 🔧 Requires Rust | ❌ Not supported
+
+**View all packages:**
+- **crates.io**: https://crates.io/search?q=llm-config
+- **npm**: https://www.npmjs.com/org/llm-dev-ops
+
 ## Quick Start
 
 ### Prerequisites
 
-- **Rust**: 1.75 or higher
+- **Rust**: 1.75 or higher (for Rust usage)
+- **Node.js**: 18+ (for npm packages)
 - **Optional**: Redis (for L2 caching)
 - **Optional**: PostgreSQL/MySQL (for persistent storage)
 
 ### Installation
 
-#### Option 1: From Source
+#### Option 1: From Crates.io
+
+```bash
+# Add to Cargo.toml
+cargo add llm-config-core llm-config-crypto
+
+# Or install CLI
+cargo install llm-config-cli
+```
+
+#### Option 2: From NPM (WebAssembly)
+
+```bash
+# Install WASM packages for browser/Node.js
+npm install @llm-dev-ops/llm-config-rbac
+npm install @llm-dev-ops/llm-config-crypto
+npm install @llm-dev-ops/llm-config-security
+npm install @llm-dev-ops/llm-config-templates
+```
+
+#### Option 3: From Source
 
 ```bash
 # Clone repository
@@ -539,7 +673,9 @@ Built with ❤️ by the **LLM DevOps Team**.
 - **200+ Tests** with comprehensive coverage
 - **10,000+ Lines** of documentation
 - **15,000+ Lines** of production code
-- **12 Crates** in modular architecture
+- **13 Crates** in modular architecture
+- **13 NPM Packages** (4 WASM, 9 reference)
+- **100% Package Coverage** on crates.io and npm
 - **Zero Known Vulnerabilities**
 - **50+ Contributors** worldwide
 
