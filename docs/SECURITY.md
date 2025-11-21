@@ -375,59 +375,56 @@ println!("Anomalies: {:?}", stats.anomalies);
 
 ### Automated Security Scans
 
-**1. Dependency Scanner** (`security/scanners/dependency-scanner.sh`):
-- Scans for vulnerable dependencies
-- Checks for outdated packages
-- Identifies unused dependencies
-- Generates security advisories
-
-```bash
-./security/scanners/dependency-scanner.sh
-```
-
-**2. Code Scanner** (`security/scanners/code-scanner.sh`):
+**1. Security Scanner** (`cargo sec-scan`):
 - Runs Clippy security lints
 - Detects unsafe code blocks
-- Finds hardcoded secrets
+- Finds hardcoded secrets (12 pattern types)
 - Checks for SQL injection risks
-- Identifies security TODOs
+- Multiple output formats: JSON, YAML, Markdown, SARIF
+- GitHub Security tab integration
 
 ```bash
-./security/scanners/code-scanner.sh
+cargo sec-scan              # Quick security scan
+cargo sec-github            # Generate SARIF for GitHub
+cargo sec-full              # Full markdown report
+```
+
+**2. Dependency Scanner** (`cargo dep-scan`):
+- Scans for vulnerable dependencies using cargo-audit
+- Checks for outdated packages (optional)
+- Identifies unused dependencies (optional)
+- Generates structured reports
+
+```bash
+cargo dep-scan                          # Quick scan
+cargo dep-scan --check-outdated         # Include outdated deps
+cargo dep-scan --fail-on-vulnerabilities # Fail on findings
 ```
 
 ### CI/CD Integration
 
-Add to `.github/workflows/security.yml`:
+The project includes automated security scanning via `.github/workflows/security-scan.yml`:
 
-```yaml
-name: Security Scan
+**Features**:
+- Runs on push, pull requests, and daily schedule (2 AM UTC)
+- Generates SARIF reports uploaded to GitHub Security tab
+- Creates markdown reports as artifacts
+- Scans dependencies for vulnerabilities
+- Fails CI on high-severity findings
 
-on: [push, pull_request]
+**Manual CI Run**:
+```bash
+# Build devtools
+cargo build --package llm-config-devtools --bins
 
-jobs:
-  security:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+# Run security scan with SARIF output
+cargo run --bin llm-security-scan -- --format sarif --output results.sarif
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-
-      - name: Run Dependency Scanner
-        run: ./security/scanners/dependency-scanner.sh
-
-      - name: Run Code Scanner
-        run: ./security/scanners/code-scanner.sh
-
-      - name: Upload Reports
-        uses: actions/upload-artifact@v3
-        with:
-          name: security-reports
-          path: security/reports/
+# Run dependency scan
+cargo run --bin llm-dependency-scan -- --fail-on-vulnerabilities
 ```
+
+See `.github/workflows/security-scan.yml` for the complete workflow configuration.
 
 ## Best Practices
 

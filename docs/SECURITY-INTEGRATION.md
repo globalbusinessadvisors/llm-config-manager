@@ -238,30 +238,34 @@ Checks for vulnerable dependencies using `cargo-audit`:
 
 ```bash
 # Run manually
-./security/scanners/dependency-scanner.sh
+cargo dep-scan                          # Quick scan
+cargo dep-scan --check-outdated         # Include outdated deps
+cargo dep-scan --fail-on-vulnerabilities # Fail on findings
 ```
 
 **Checks**:
 - Known vulnerabilities in dependencies
-- Outdated packages
-- Unused dependencies
+- Outdated packages (optional)
+- Unused dependencies (optional)
 - Security advisories from RustSec
 
-#### 2. Code Scan
+#### 2. Security Code Scan
 
 Static code analysis for security issues:
 
 ```bash
 # Run manually
-./security/scanners/code-scanner.sh
+cargo sec-scan              # Quick security scan
+cargo sec-github            # Generate SARIF for GitHub
+cargo sec-full              # Full markdown report
 ```
 
 **Checks**:
 - Clippy security lints
 - Unsafe code blocks
-- Hardcoded secrets
+- Hardcoded secrets (12 pattern types)
 - SQL injection risks
-- Security-related TODOs
+- Multiple output formats: JSON, YAML, Markdown, SARIF
 
 #### 3. Security Tests
 

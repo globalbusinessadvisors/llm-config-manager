@@ -84,9 +84,10 @@ LLM Config Manager implements technical safeguards applicable when handling ePHI
 **Evidence**:
 ```
 Location: docs/SECURITY.md (Threat Model)
-Tools: security/scanners/dependency-scanner.sh, code-scanner.sh
-Process: Quarterly risk assessments
-Documentation: Risk assessment reports
+Tools: cargo sec-scan, cargo dep-scan (Rust implementations)
+CI/CD: .github/workflows/security-scan.yml (automated daily scans)
+Process: Quarterly risk assessments + automated daily scans
+Documentation: Risk assessment reports, SARIF reports in GitHub Security
 ```
 
 ##### (ii) Risk Management (Required)

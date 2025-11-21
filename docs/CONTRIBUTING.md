@@ -46,8 +46,8 @@ cargo build
 cargo test --all-features
 
 # Run security scans
-./security/scanners/dependency-scanner.sh
-./security/scanners/code-scanner.sh
+cargo sec-scan              # Quick security scan
+cargo dep-scan              # Dependency vulnerability scan
 ```
 
 ## Development Setup
@@ -210,8 +210,8 @@ cargo clippy --all-targets --all-features -- -D warnings
 cargo test --all-features
 
 # Check security
-./security/scanners/dependency-scanner.sh
-./security/scanners/code-scanner.sh
+cargo sec-scan              # Quick security scan
+cargo dep-scan              # Dependency vulnerability scan
 
 # Build documentation
 cargo doc --no-deps --all-features

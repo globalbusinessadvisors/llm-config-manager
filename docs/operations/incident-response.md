@@ -405,8 +405,8 @@ kubectl rollout history deployment llm-config-manager -n llm-config
    kubectl scale deployment llm-config-manager -n llm-config --replicas=3
 
    # Verify security
-   ./security/scanners/dependency-scanner.sh
-   ./security/scanners/code-scanner.sh
+   cargo dep-scan --fail-on-vulnerabilities
+   cargo sec-scan --fail-on-high
    ```
 
 5. **Report**:

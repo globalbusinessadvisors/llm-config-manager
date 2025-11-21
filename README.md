@@ -462,8 +462,8 @@ cargo build
 cargo test --all-features
 
 # Run security scans
-./security/scanners/dependency-scanner.sh
-./security/scanners/code-scanner.sh
+cargo sec-scan              # Quick security scan
+cargo dep-scan              # Dependency vulnerability scan
 
 # Start dev server
 cargo run --package llm-config-api

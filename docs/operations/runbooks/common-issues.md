@@ -578,8 +578,8 @@ docker-compose restart llm-config-manager
 **Solution**:
 ```bash
 # 1. Run security scanners
-./security/scanners/dependency-scanner.sh
-./security/scanners/code-scanner.sh
+cargo dep-scan --fail-on-vulnerabilities
+cargo sec-scan --fail-on-high
 
 # 2. Update dependencies
 cargo update

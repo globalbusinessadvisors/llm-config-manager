@@ -534,9 +534,10 @@ This document maps the LLM Config Manager security controls to SOC 2 Type II Tru
 - Vulnerability remediation process
 
 **Evidence**:
-- Dependency scanner in `security/scanners/dependency-scanner.sh`
-- Code scanner in `security/scanners/code-scanner.sh`
-- CI/CD security pipeline
+- Dependency scanner via `cargo dep-scan` (Rust implementation)
+- Security code scanner via `cargo sec-scan` (Rust implementation)
+- CI/CD security pipeline in `.github/workflows/security-scan.yml`
+- SARIF reports uploaded to GitHub Security tab
 - Vulnerability tracking
 
 **Audit Procedure**: Review vulnerability management process and scan results.
@@ -1088,10 +1089,13 @@ This document maps the LLM Config Manager security controls to SOC 2 Type II Tru
 3. **Security Scanning**
    ```bash
    # Dependency scan
-   ./security/scanners/dependency-scanner.sh
+   cargo dep-scan --fail-on-vulnerabilities
 
-   # Code scan
-   ./security/scanners/code-scanner.sh
+   # Security code scan
+   cargo sec-scan --fail-on-high
+
+   # Full report with SARIF for GitHub
+   cargo sec-github
    ```
 
 4. **Audit Log Review**
