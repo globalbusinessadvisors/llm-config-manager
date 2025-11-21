@@ -1,0 +1,53 @@
+[Unit]
+Description=LLM Config Manager - Backup service
+Documentation=https://github.com/llm-devops/llm-config-manager
+After=llm-config-manager.service
+Requires=llm-config-manager.service
+
+[Service]
+Type=oneshot
+User=llmconfig
+Group=llmconfig
+
+# Working directory
+WorkingDirectory=/var/lib/llm-config
+
+# Backup command
+ExecStart=/usr/local/bin/llm-config-server backup \
+    --config /etc/llm-config/config.yaml \
+    --output /var/lib/llm-config/backups/backup-%Y%m%d-%H%M%S.tar.gz
+
+# Environment configuration
+EnvironmentFile=-/etc/default/llm-config-manager
+Environment=RUST_LOG=info
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/llm-config/backups /var/log/llm-config
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+
+# Resource limits
+LimitNOFILE=1024
+MemoryMax=512M
+CPUQuota=50%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=llm-config-backup
+
+# Timeout
+TimeoutStartSec=3600s
+
+[Install]
+WantedBy=multi-user.target

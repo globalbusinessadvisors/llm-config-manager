@@ -1,10 +1,12 @@
 //! HTTP server implementation
 
+use crate::middleware::{comprehensive_security_middleware, SecurityState};
 use crate::routes::{
     delete_config, get_config, get_history, health_check, list_configs, rollback_config,
     set_config, ApiState,
 };
 use axum::{
+    middleware,
     routing::{delete, get, post},
     Router,
 };
@@ -20,6 +22,7 @@ pub struct ServerConfig {
     pub host: String,
     pub port: u16,
     pub enable_cors: bool,
+    pub enable_security: bool,
 }
 
 impl Default for ServerConfig {
@@ -28,15 +31,16 @@ impl Default for ServerConfig {
             host: "127.0.0.1".to_string(),
             port: 8080,
             enable_cors: true,
+            enable_security: true,
         }
     }
 }
 
 /// Create and configure the Axum router
-pub fn create_router(manager: Arc<ConfigManager>) -> Router {
-    let state = ApiState { manager };
+pub fn create_router(manager: Arc<ConfigManager>, security_state: SecurityState) -> Router {
+    let api_state = ApiState { manager };
 
-    // API v1 routes
+    // API v1 routes with security middleware
     let api_routes = Router::new()
         // Config operations
         .route("/configs/:namespace/:key", get(get_config))
@@ -49,9 +53,13 @@ pub fn create_router(manager: Arc<ConfigManager>) -> Router {
             "/configs/:namespace/:key/rollback/:version",
             post(rollback_config),
         )
-        .with_state(state);
+        .layer(middleware::from_fn_with_state(
+            security_state.clone(),
+            comprehensive_security_middleware,
+        ))
+        .with_state(api_state);
 
-    // Main router with health check
+    // Main router with health check (no security on health endpoint)
     Router::new()
         .route("/health", get(health_check))
         .nest("/api/v1", api_routes)
@@ -62,7 +70,14 @@ pub async fn serve(
     manager: Arc<ConfigManager>,
     config: ServerConfig,
 ) -> anyhow::Result<()> {
-    let app = create_router(manager);
+    // Create security state
+    let security_state = if config.enable_security {
+        SecurityState::new()
+    } else {
+        SecurityState::new() // Always create but can be configured differently
+    };
+
+    let app = create_router(manager, security_state);
 
     // Add middleware layers
     let app = app
@@ -78,15 +93,22 @@ pub async fn serve(
 
     // Bind to address
     let addr: SocketAddr = format!("{}:{}", config.host, config.port).parse()?;
-    tracing::info!("Starting LLM Config API server on {}", addr);
+    tracing::info!(
+        "Starting LLM Config API server on {} (security: {})",
+        addr,
+        config.enable_security
+    );
 
     // Create listener
     let listener = tokio::net::TcpListener::bind(addr).await?;
 
     // Serve with graceful shutdown
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .with_graceful_shutdown(shutdown_signal())
+    .await?;
 
     Ok(())
 }

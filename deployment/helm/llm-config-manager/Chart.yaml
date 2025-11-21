@@ -1,0 +1,62 @@
+apiVersion: v2
+name: llm-config-manager
+description: A Helm chart for LLM Config Manager - Enterprise configuration management platform
+type: application
+
+# Chart version - increment when making changes to the chart
+version: 1.0.0
+
+# Application version - version of the application being deployed
+appVersion: "1.0.0"
+
+keywords:
+  - llm
+  - configuration
+  - config-management
+  - enterprise
+  - rbac
+  - audit
+
+home: https://github.com/llm-devops/llm-config-manager
+sources:
+  - https://github.com/llm-devops/llm-config-manager
+
+maintainers:
+  - name: LLM DevOps Team
+    email: devops@example.com
+
+icon: https://example.com/llm-config-manager-icon.png
+
+# Dependencies (optional)
+dependencies:
+  - name: postgresql
+    version: "12.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+    tags:
+      - database
+
+  - name: redis
+    version: "17.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+    tags:
+      - cache
+
+  - name: prometheus
+    version: "15.x.x"
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: monitoring.prometheus.enabled
+    tags:
+      - monitoring
+
+  - name: grafana
+    version: "6.x.x"
+    repository: https://grafana.github.io/helm-charts
+    condition: monitoring.grafana.enabled
+    tags:
+      - monitoring
+
+annotations:
+  category: Infrastructure
+  licenses: Apache-2.0

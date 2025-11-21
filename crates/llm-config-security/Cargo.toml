@@ -1,0 +1,51 @@
+[package]
+name = "llm-config-security"
+version = "1.0.0"
+edition = "2021"
+authors = ["LLM DevOps Team"]
+description = "Security hardening and validation for LLM Config Manager"
+license = "Apache-2.0"
+
+[dependencies]
+# Core dependencies
+thiserror = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Validation
+validator = { version = "0.16", features = ["derive"] }
+regex = "1.10"
+
+# Cryptography
+sha2 = "0.10"
+hmac = "0.12"
+argon2 = "0.5"
+constant_time_eq = "0.3"
+
+# Security
+secrecy = { version = "0.8", features = ["serde"] }
+zeroize = "1.7"
+
+# Rate limiting
+governor = "0.6"
+nonzero_ext = "0.3"
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Async
+tokio = { version = "1.35", features = ["full"] }
+async-trait = "0.1"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+tokio-test = "0.4"
+criterion = "0.5"
+proptest = "1.4"
+
+[[bench]]
+name = "security_benchmarks"
+harness = false

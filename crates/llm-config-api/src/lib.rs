@@ -24,8 +24,10 @@
 //! }
 //! ```
 
+pub mod middleware;
 pub mod routes;
 pub mod server;
 
+pub use middleware::{SecurityResponse, SecurityState};
 pub use routes::{ApiError, ApiState, ConfigResponse, ErrorResponse};
 pub use server::{create_router, serve, ServerConfig};

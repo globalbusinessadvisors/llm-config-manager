@@ -1,0 +1,10 @@
+# Namespace for LLM Config Manager
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: llm-config
+  labels:
+    name: llm-config
+    environment: production
+    app.kubernetes.io/name: llm-config-manager
+    app.kubernetes.io/component: platform

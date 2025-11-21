@@ -1,0 +1,62 @@
+# Rust build artifacts
+target/
+**/*.rs.bk
+*.pdb
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Test files
+tests/
+benches/
+**/tests/
+**/benches/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Development
+.env
+.env.local
+docker-compose.yml
+docker-compose.*.yml
+
+# Node modules (if any)
+node_modules/
+
+# macOS
+.DS_Store
+
+# Backups
+*.bak
+*~
+
+# Data directories
+data/
+cache/
+backups/

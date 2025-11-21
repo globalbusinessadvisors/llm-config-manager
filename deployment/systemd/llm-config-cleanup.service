@@ -1,0 +1,42 @@
+[Unit]
+Description=LLM Config Manager - Cleanup old backups and logs
+Documentation=https://github.com/llm-devops/llm-config-manager
+After=llm-config-manager.service
+
+[Service]
+Type=oneshot
+User=llmconfig
+Group=llmconfig
+
+# Cleanup old backups (older than 30 days)
+ExecStart=/usr/bin/find /var/lib/llm-config/backups -name "backup-*.tar.gz" -type f -mtime +30 -delete
+
+# Cleanup old logs (older than 7 days)
+ExecStart=/usr/bin/find /var/log/llm-config -name "*.log" -type f -mtime +7 -delete
+
+# Cleanup empty directories
+ExecStart=/usr/bin/find /var/lib/llm-config/backups -type d -empty -delete
+
+# Environment
+Environment=RUST_LOG=info
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/llm-config/backups /var/log/llm-config
+ProtectKernelTunables=true
+ProtectKernelModules=true
+
+# Resource limits
+LimitNOFILE=1024
+MemoryMax=128M
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=llm-config-cleanup
+
+[Install]
+WantedBy=multi-user.target

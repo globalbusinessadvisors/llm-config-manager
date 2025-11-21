@@ -1,0 +1,29 @@
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "llm-config-manager.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "llm-config-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: rbac
+rules:
+  {{- toYaml .Values.rbac.rules | nindent 2 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "llm-config-manager.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "llm-config-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "llm-config-manager.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "llm-config-manager.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

@@ -1,0 +1,211 @@
+# Main Deployment for LLM Config Manager
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-config-manager
+  namespace: llm-config
+  labels:
+    app: llm-config-manager
+    component: api
+    version: v1.0.0
+spec:
+  replicas: 3  # High availability with 3 replicas
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0  # Zero-downtime deployments
+  selector:
+    matchLabels:
+      app: llm-config-manager
+      component: api
+  template:
+    metadata:
+      labels:
+        app: llm-config-manager
+        component: api
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: llm-config-manager
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+      # Init container for database migrations
+      initContainers:
+        - name: db-migration
+          image: llm-config-manager:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/usr/local/bin/llm-config-server", "migrate"]
+          envFrom:
+            - configMapRef:
+                name: llm-config-manager-config
+            - secretRef:
+                name: llm-config-manager-secrets
+          env:
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: POSTGRES_PASSWORD
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+      containers:
+        - name: llm-config-manager
+          image: llm-config-manager:latest
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+
+          envFrom:
+            - configMapRef:
+                name: llm-config-manager-config
+            - secretRef:
+                name: llm-config-manager-secrets
+
+          env:
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: POSTGRES_PASSWORD
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: REDIS_PASSWORD
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+
+          # Resource limits and requests
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+
+          # Volume mounts
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/llm-config/data
+            - name: cache
+              mountPath: /var/lib/llm-config/cache
+            - name: backups
+              mountPath: /var/lib/llm-config/backups
+            - name: logs
+              mountPath: /var/log/llm-config
+            - name: config
+              mountPath: /etc/llm-config
+              readOnly: true
+
+          # Liveness probe - checks if container is alive
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+
+          # Readiness probe - checks if container is ready to serve traffic
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+
+          # Startup probe - gives more time for initial startup
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 30  # 30 * 5s = 150s max startup time
+
+          # Security context
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false  # Need write access to logs
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+
+          # Lifecycle hooks
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 15"]  # Wait for graceful shutdown
+
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: llm-config-data
+        - name: cache
+          persistentVolumeClaim:
+            claimName: llm-config-cache
+        - name: backups
+          persistentVolumeClaim:
+            claimName: llm-config-backups
+        - name: logs
+          persistentVolumeClaim:
+            claimName: llm-config-logs
+        - name: config
+          configMap:
+            name: llm-config-manager-config
+
+      # Pod disruption budget for high availability
+      terminationGracePeriodSeconds: 30
+
+      # Affinity rules for better distribution
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - llm-config-manager
+                topologyKey: kubernetes.io/hostname

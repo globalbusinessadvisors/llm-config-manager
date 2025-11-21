@@ -1,0 +1,96 @@
+{{- if and .Values.monitoring.prometheus.enabled .Values.monitoring.prometheus.rules.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "llm-config-manager.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "llm-config-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: monitoring
+    prometheus: kube-prometheus
+spec:
+  groups:
+    - name: llm_config_critical
+      interval: 30s
+      rules:
+        - alert: LLMConfigManagerDown
+          expr: up{job="{{ include "llm-config-manager.fullname" . }}"} == 0
+          for: 1m
+          labels:
+            severity: critical
+            component: api
+          annotations:
+            summary: "LLM Config Manager is down"
+            description: "LLM Config Manager has been down for more than 1 minute"
+
+        - alert: LLMConfigHighErrorRate
+          expr: |
+            sum(rate(config_errors_total[5m])) /
+            sum(rate(config_operations_total[5m])) > 0.10
+          for: 5m
+          labels:
+            severity: critical
+            component: api
+          annotations:
+            summary: "High error rate detected"
+            description: "Error rate is {{`{{ $value | humanizePercentage }}`}}"
+
+    - name: llm_config_warnings
+      interval: 30s
+      rules:
+        - alert: LLMConfigHighLatency
+          expr: |
+            histogram_quantile(0.95,
+              rate(http_request_duration_seconds_bucket[5m])
+            ) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+            component: api
+          annotations:
+            summary: "High latency detected"
+            description: "P95 latency is {{`{{ $value | humanizeDuration }}`}}"
+
+        - alert: LLMConfigPodCrashLooping
+          expr: |
+            rate(kube_pod_container_status_restarts_total{
+              namespace="{{ .Release.Namespace }}",
+              pod=~"{{ include "llm-config-manager.fullname" . }}-.*"
+            }[15m]) > 0
+          for: 5m
+          labels:
+            severity: warning
+            component: api
+          annotations:
+            summary: "Pod is crash looping"
+            description: "Pod {{`{{ $labels.pod }}`}} is crash looping"
+
+        - alert: LLMConfigLowCacheHitRate
+          expr: |
+            sum(rate(cache_hits_total[5m])) /
+            (sum(rate(cache_hits_total[5m])) + sum(rate(cache_misses_total[5m]))) < 0.7
+          for: 10m
+          labels:
+            severity: warning
+            component: cache
+          annotations:
+            summary: "Low cache hit rate"
+            description: "Cache hit rate is {{`{{ $value | humanizePercentage }}`}}"
+
+        - alert: LLMConfigHighMemoryUsage
+          expr: |
+            container_memory_usage_bytes{
+              namespace="{{ .Release.Namespace }}",
+              pod=~"{{ include "llm-config-manager.fullname" . }}-.*"
+            } / container_spec_memory_limit_bytes{
+              namespace="{{ .Release.Namespace }}",
+              pod=~"{{ include "llm-config-manager.fullname" . }}-.*"
+            } > 0.9
+          for: 5m
+          labels:
+            severity: warning
+            component: resources
+          annotations:
+            summary: "High memory usage"
+            description: "Pod {{`{{ $labels.pod }}`}} memory usage is {{`{{ $value | humanizePercentage }}`}}"
+{{- end }}

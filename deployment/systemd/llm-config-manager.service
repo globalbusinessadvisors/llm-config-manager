@@ -1,0 +1,98 @@
+[Unit]
+Description=LLM Config Manager - Enterprise configuration management platform
+Documentation=https://github.com/llm-devops/llm-config-manager
+After=network-online.target
+Wants=network-online.target postgresql.service redis.service
+Requires=network-online.target
+
+[Service]
+Type=notify
+User=llmconfig
+Group=llmconfig
+
+# Working directory
+WorkingDirectory=/var/lib/llm-config
+
+# Binary location
+ExecStart=/usr/local/bin/llm-config-server --config /etc/llm-config/config.yaml
+
+# Reload configuration
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Pre-start checks
+ExecStartPre=/usr/local/bin/llm-config-server check-config --config /etc/llm-config/config.yaml
+ExecStartPre=/bin/mkdir -p /var/lib/llm-config/data
+ExecStartPre=/bin/mkdir -p /var/lib/llm-config/cache
+ExecStartPre=/bin/mkdir -p /var/lib/llm-config/backups
+ExecStartPre=/bin/mkdir -p /var/log/llm-config
+
+# Environment configuration
+EnvironmentFile=-/etc/default/llm-config-manager
+EnvironmentFile=-/etc/llm-config/environment
+
+# Default environment variables
+Environment=RUST_LOG=info
+Environment=LLM_CONFIG_ENVIRONMENT=production
+Environment=LLM_CONFIG_DATA_DIR=/var/lib/llm-config/data
+Environment=LLM_CONFIG_CACHE_DIR=/var/lib/llm-config/cache
+Environment=LLM_CONFIG_LOG_DIR=/var/log/llm-config
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/llm-config /var/log/llm-config
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+PrivateMounts=true
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+SystemCallArchitectures=native
+UMask=0027
+
+# Capabilities
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=512
+TasksMax=4096
+MemoryMax=2G
+CPUQuota=200%
+
+# Restart policy
+Restart=on-failure
+RestartSec=5s
+StartLimitInterval=300s
+StartLimitBurst=5
+
+# Watchdog
+WatchdogSec=30s
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=llm-config-manager
+
+# Notification socket
+NotifyAccess=main
+TimeoutStartSec=60s
+TimeoutStopSec=30s
+
+# Nice and ionice
+Nice=0
+IOSchedulingClass=best-effort
+IOSchedulingPriority=4
+
+[Install]
+WantedBy=multi-user.target
+Alias=llm-config.service

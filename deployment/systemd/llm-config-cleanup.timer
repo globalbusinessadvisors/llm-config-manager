@@ -1,0 +1,20 @@
+[Unit]
+Description=LLM Config Manager - Weekly cleanup timer
+Documentation=https://github.com/llm-devops/llm-config-manager
+Requires=llm-config-cleanup.service
+
+[Timer]
+# Run weekly on Sunday at 3 AM
+OnCalendar=Sun 03:00
+
+# Run 2 hours after boot if missed
+Persistent=true
+
+# Randomize start time
+RandomizedDelaySec=15min
+
+# Accuracy
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

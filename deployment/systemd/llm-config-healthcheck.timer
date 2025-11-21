@@ -1,0 +1,15 @@
+[Unit]
+Description=LLM Config Manager - Health check timer (every 5 minutes)
+Documentation=https://github.com/llm-devops/llm-config-manager
+Requires=llm-config-healthcheck.service
+
+[Timer]
+# Run every 5 minutes
+OnBootSec=5min
+OnUnitActiveSec=5min
+
+# Accuracy
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

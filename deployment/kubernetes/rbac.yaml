@@ -1,0 +1,100 @@
+# RBAC Configuration for LLM Config Manager
+---
+# ServiceAccount for the application
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: llm-config-manager
+  namespace: llm-config
+  labels:
+    app: llm-config-manager
+    component: rbac
+automountServiceAccountToken: true
+
+---
+# Role for accessing ConfigMaps and Secrets
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: llm-config-manager
+  namespace: llm-config
+  labels:
+    app: llm-config-manager
+    component: rbac
+rules:
+  # ConfigMaps access
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+
+  # Secrets access (read-only)
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
+
+  # Pods access for health checks
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+
+  # Events for logging
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+
+---
+# RoleBinding to attach Role to ServiceAccount
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: llm-config-manager
+  namespace: llm-config
+  labels:
+    app: llm-config-manager
+    component: rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: llm-config-manager
+subjects:
+  - kind: ServiceAccount
+    name: llm-config-manager
+    namespace: llm-config
+
+---
+# ClusterRole for cross-namespace operations (if needed)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: llm-config-manager-cluster
+  labels:
+    app: llm-config-manager
+    component: rbac
+rules:
+  # Node information for system metrics
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list"]
+
+  # Namespace information
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list"]
+
+---
+# ClusterRoleBinding (optional - only if cross-namespace access is needed)
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRoleBinding
+# metadata:
+#   name: llm-config-manager-cluster
+#   labels:
+#     app: llm-config-manager
+#     component: rbac
+# roleRef:
+#   apiGroup: rbac.authorization.k8s.io
+#   kind: ClusterRole
+#   name: llm-config-manager-cluster
+# subjects:
+#   - kind: ServiceAccount
+#     name: llm-config-manager
+#     namespace: llm-config

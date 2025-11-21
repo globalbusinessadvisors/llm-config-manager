@@ -1,0 +1,21 @@
+[Unit]
+Description=LLM Config Manager - Daily backup timer
+Documentation=https://github.com/llm-devops/llm-config-manager
+Requires=llm-config-backup.service
+
+[Timer]
+# Run daily at 2 AM
+OnCalendar=daily
+OnCalendar=02:00
+
+# Run 1 hour after boot if missed
+Persistent=true
+
+# Randomize start time by up to 30 minutes to avoid load spikes
+RandomizedDelaySec=30min
+
+# Accuracy
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

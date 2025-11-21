@@ -1,0 +1,60 @@
+# ConfigMap for LLM Config Manager
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llm-config-manager-config
+  namespace: llm-config
+  labels:
+    app: llm-config-manager
+    component: configuration
+data:
+  # Server configuration
+  SERVER_HOST: "0.0.0.0"
+  SERVER_PORT: "8080"
+  SERVER_WORKERS: "4"
+
+  # Metrics configuration
+  METRICS_ENABLED: "true"
+  METRICS_PORT: "9090"
+
+  # Cache configuration
+  CACHE_L1_SIZE: "10000"
+  CACHE_L1_TTL_SECONDS: "3600"
+  CACHE_L2_ENABLED: "true"
+
+  # Storage configuration
+  STORAGE_TYPE: "postgres"
+  STORAGE_POOL_SIZE: "20"
+
+  # Audit configuration
+  AUDIT_ENABLED: "true"
+  AUDIT_RETENTION_DAYS: "365"
+  AUDIT_BATCH_SIZE: "1000"
+
+  # Environment
+  RUST_LOG: "info"
+  LLM_CONFIG_ENVIRONMENT: "production"
+
+  # Feature flags
+  ENABLE_RBAC: "true"
+  ENABLE_ENCRYPTION: "true"
+  ENABLE_AUDIT: "true"
+  ENABLE_CACHE: "true"
+
+  # Production settings
+  DATA_DIR: "/var/lib/llm-config/data"
+  CACHE_DIR: "/var/lib/llm-config/cache"
+  BACKUP_DIR: "/var/lib/llm-config/backups"
+  LOG_DIR: "/var/log/llm-config"
+
+  # Database connection (non-sensitive parts)
+  DATABASE_NAME: "llm_config"
+  DATABASE_USER: "llm_config_user"
+  DATABASE_HOST: "postgres-service.llm-config.svc.cluster.local"
+  DATABASE_PORT: "5432"
+  DATABASE_MAX_CONNECTIONS: "20"
+
+  # Redis connection (non-sensitive parts)
+  REDIS_HOST: "redis-service.llm-config.svc.cluster.local"
+  REDIS_PORT: "6379"
+  REDIS_POOL_SIZE: "10"

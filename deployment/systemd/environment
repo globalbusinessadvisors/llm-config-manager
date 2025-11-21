@@ -1,0 +1,52 @@
+# Environment configuration for LLM Config Manager
+# This file is sourced by systemd service units
+
+# Application environment
+LLM_CONFIG_ENVIRONMENT=production
+
+# Logging level
+RUST_LOG=info
+RUST_BACKTRACE=1
+
+# Data directories
+LLM_CONFIG_DATA_DIR=/var/lib/llm-config/data
+LLM_CONFIG_CACHE_DIR=/var/lib/llm-config/cache
+LLM_CONFIG_BACKUP_DIR=/var/lib/llm-config/backups
+LLM_CONFIG_LOG_DIR=/var/log/llm-config
+
+# Server configuration
+SERVER_HOST=0.0.0.0
+SERVER_PORT=8080
+SERVER_WORKERS=4
+
+# Metrics configuration
+METRICS_ENABLED=true
+METRICS_PORT=9090
+
+# Database configuration (use actual values in production)
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_NAME=llm_config
+DATABASE_USER=llm_config_user
+# DATABASE_PASSWORD should be set in /etc/default/llm-config-manager (not in this file)
+
+# Redis configuration (use actual values in production)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+# REDIS_PASSWORD should be set in /etc/default/llm-config-manager (not in this file)
+
+# Cache configuration
+CACHE_L1_SIZE=10000
+CACHE_L1_TTL_SECONDS=3600
+CACHE_L2_ENABLED=true
+
+# Audit configuration
+AUDIT_ENABLED=true
+AUDIT_RETENTION_DAYS=365
+AUDIT_BATCH_SIZE=1000
+
+# Feature flags
+ENABLE_RBAC=true
+ENABLE_ENCRYPTION=true
+ENABLE_AUDIT=true
+ENABLE_CACHE=true

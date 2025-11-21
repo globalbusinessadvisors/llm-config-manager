@@ -1,0 +1,86 @@
+# Services for LLM Config Manager
+---
+# ClusterIP service for internal communication
+apiVersion: v1
+kind: Service
+metadata:
+  name: llm-config-manager
+  namespace: llm-config
+  labels:
+    app: llm-config-manager
+    component: api
+spec:
+  type: ClusterIP
+  sessionAffinity: ClientIP  # Sticky sessions for better caching
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800  # 3 hours
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: metrics
+      protocol: TCP
+  selector:
+    app: llm-config-manager
+    component: api
+
+---
+# LoadBalancer service for external access
+apiVersion: v1
+kind: Service
+metadata:
+  name: llm-config-manager-external
+  namespace: llm-config
+  labels:
+    app: llm-config-manager
+    component: api
+  annotations:
+    # AWS ELB annotations
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    # GCP annotations
+    cloud.google.com/load-balancer-type: "Internal"
+    # Azure annotations
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local  # Preserve source IP
+  ports:
+    - name: https
+      port: 443
+      targetPort: http
+      protocol: TCP
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: llm-config-manager
+    component: api
+
+---
+# Headless service for StatefulSet support (if needed)
+apiVersion: v1
+kind: Service
+metadata:
+  name: llm-config-manager-headless
+  namespace: llm-config
+  labels:
+    app: llm-config-manager
+    component: api
+spec:
+  type: ClusterIP
+  clusterIP: None  # Headless service
+  publishNotReadyAddresses: true
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: llm-config-manager
+    component: api

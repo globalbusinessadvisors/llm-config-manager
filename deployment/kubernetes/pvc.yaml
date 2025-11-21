@@ -1,0 +1,140 @@
+# Persistent Volume Claims for LLM Config Manager
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llm-config-data
+  namespace: llm-config
+  labels:
+    app: llm-config-manager
+    component: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard  # Change to your storage class
+  resources:
+    requests:
+      storage: 50Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llm-config-cache
+  namespace: llm-config
+  labels:
+    app: llm-config-manager
+    component: cache
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 20Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llm-config-backups
+  namespace: llm-config
+  labels:
+    app: llm-config-manager
+    component: backups
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llm-config-logs
+  namespace: llm-config
+  labels:
+    app: llm-config-manager
+    component: logs
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# PostgreSQL persistent storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+  namespace: llm-config
+  labels:
+    app: postgres
+    component: database
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 50Gi
+
+---
+# Redis persistent storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-data
+  namespace: llm-config
+  labels:
+    app: redis
+    component: cache
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# Prometheus persistent storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-data
+  namespace: llm-config
+  labels:
+    app: prometheus
+    component: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 30Gi
+
+---
+# Grafana persistent storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-data
+  namespace: llm-config
+  labels:
+    app: grafana
+    component: visualization
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 5Gi

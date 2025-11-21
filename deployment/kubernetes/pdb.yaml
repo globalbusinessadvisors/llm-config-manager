@@ -1,0 +1,19 @@
+# Pod Disruption Budget for LLM Config Manager
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: llm-config-manager
+  namespace: llm-config
+  labels:
+    app: llm-config-manager
+    component: availability
+spec:
+  minAvailable: 2  # Always keep at least 2 pods running
+  # Alternative: maxUnavailable: 1  # Allow at most 1 pod to be unavailable
+  selector:
+    matchLabels:
+      app: llm-config-manager
+      component: api
+
+  # Unhealthy pod eviction policy
+  unhealthyPodEvictionPolicy: IfHealthyBudget

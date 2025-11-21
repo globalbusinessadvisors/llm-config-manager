@@ -1,0 +1,402 @@
+# Default values for llm-config-manager
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global settings
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: "standard"
+
+# Number of replicas
+replicaCount: 3
+
+# Image configuration
+image:
+  registry: docker.io
+  repository: llm-config-manager
+  pullPolicy: IfNotPresent
+  tag: "latest"  # Overrides the image tag (default is chart appVersion)
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Service account configuration
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Pod annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9090"
+  prometheus.io/path: "/metrics"
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  capabilities:
+    drop:
+      - ALL
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+  metricsPort: 9090
+  annotations: {}
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+
+# LoadBalancer service (optional)
+loadBalancer:
+  enabled: false
+  annotations: {}
+  # AWS annotations
+  # service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+  # GCP annotations
+  # cloud.google.com/load-balancer-type: "Internal"
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+  hosts:
+    - host: api.llm-config.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: llm-config-tls-cert
+      hosts:
+        - api.llm-config.example.com
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+# Autoscaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  # Custom metrics (requires metrics-server)
+  customMetrics: []
+  # - type: Pods
+  #   pods:
+  #     metric:
+  #       name: http_requests_per_second
+  #     target:
+  #       type: AverageValue
+  #       averageValue: 1000
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# Liveness probe configuration
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 3
+
+# Readiness probe configuration
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /health/ready
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 3
+
+# Startup probe configuration
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 0
+  periodSeconds: 5
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 30
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity rules
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - llm-config-manager
+          topologyKey: kubernetes.io/hostname
+
+# Environment variables from ConfigMap
+config:
+  serverHost: "0.0.0.0"
+  serverPort: "8080"
+  serverWorkers: "4"
+  metricsEnabled: "true"
+  metricsPort: "9090"
+  cacheL1Size: "10000"
+  cacheL1TtlSeconds: "3600"
+  cacheL2Enabled: "true"
+  storageType: "postgres"
+  storagePoolSize: "20"
+  auditEnabled: "true"
+  auditRetentionDays: "365"
+  auditBatchSize: "1000"
+  rustLog: "info"
+  environment: "production"
+  enableRbac: "true"
+  enableEncryption: "true"
+  enableAudit: "true"
+  enableCache: "true"
+
+# Secrets configuration
+secrets:
+  # IMPORTANT: These should be overridden in production
+  # Use external secret management (Vault, Sealed Secrets, etc.)
+  encryptionKey: "CHANGE_ME_GENERATE_WITH_OPENSSL_RAND"
+  apiTokenSecret: "CHANGE_ME_GENERATE_SECURE_TOKEN"
+
+# Persistent storage
+persistence:
+  enabled: true
+  storageClass: "standard"  # Change to your storage class
+
+  data:
+    size: 50Gi
+    accessMode: ReadWriteOnce
+
+  cache:
+    size: 20Gi
+    accessMode: ReadWriteOnce
+
+  backups:
+    size: 100Gi
+    accessMode: ReadWriteOnce
+
+  logs:
+    size: 10Gi
+    accessMode: ReadWriteOnce
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  auth:
+    username: llm_config_user
+    password: "CHANGE_ME_USE_STRONG_PASSWORD"
+    database: llm_config
+  primary:
+    persistence:
+      enabled: true
+      size: 50Gi
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+
+# Redis configuration
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: "CHANGE_ME_USE_STRONG_PASSWORD"
+  master:
+    persistence:
+      enabled: true
+      size: 10Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+# Monitoring configuration
+monitoring:
+  # Prometheus
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+      scrapeTimeout: 10s
+
+    rules:
+      enabled: true
+      # Alert rules are defined in templates/prometheusrule.yaml
+
+  # Grafana
+  grafana:
+    enabled: true
+    adminUser: admin
+    adminPassword: "CHANGE_ME_USE_STRONG_PASSWORD"
+    dashboards:
+      enabled: true
+    datasources:
+      enabled: true
+
+# Network policies
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+
+# Init containers
+initContainers:
+  dbMigration:
+    enabled: true
+    image:
+      registry: docker.io
+      repository: llm-config-manager
+      tag: "latest"
+
+# Extra environment variables
+extraEnvVars: []
+# - name: EXTRA_VAR
+#   value: "extra-value"
+
+# Extra environment variables from ConfigMap
+extraEnvVarsConfigMap: ""
+
+# Extra environment variables from Secret
+extraEnvVarsSecret: ""
+
+# Extra volumes
+extraVolumes: []
+# - name: extra-volume
+#   emptyDir: {}
+
+# Extra volume mounts
+extraVolumeMounts: []
+# - name: extra-volume
+#   mountPath: /extra
+
+# Lifecycle hooks
+lifecycle:
+  preStop:
+    exec:
+      command: ["/bin/sh", "-c", "sleep 15"]
+
+# Termination grace period
+terminationGracePeriodSeconds: 30
+
+# Update strategy
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+# Pod labels
+podLabels: {}
+
+# Pod security policy
+podSecurityPolicy:
+  create: false
+  name: ""
+
+# RBAC
+rbac:
+  create: true
+  rules:
+    - apiGroups: [""]
+      resources: ["configmaps"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: [""]
+      resources: ["secrets"]
+      verbs: ["get", "list", "watch"]
+
+# Priority class
+priorityClassName: ""
+
+# DNS configuration
+dnsPolicy: ClusterFirst
+dnsConfig: {}
+
+# Host aliases
+hostAliases: []
+
+# Init container image
+initImage:
+  registry: docker.io
+  repository: busybox
+  tag: latest
+  pullPolicy: IfNotPresent

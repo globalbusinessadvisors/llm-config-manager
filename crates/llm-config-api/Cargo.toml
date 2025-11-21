@@ -9,6 +9,7 @@ license.workspace = true
 [dependencies]
 llm-config-core = { path = "../llm-config-core" }
 llm-config-crypto = { path = "../llm-config-crypto" }
+llm-config-security = { path = "../llm-config-security" }
 tokio = { workspace = true }
 axum = { workspace = true }
 tower = { workspace = true }

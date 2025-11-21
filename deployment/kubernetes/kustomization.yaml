@@ -1,0 +1,72 @@
+# Kustomization for LLM Config Manager Kubernetes deployment
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Namespace to deploy into
+namespace: llm-config
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/name: llm-config-manager
+  app.kubernetes.io/version: "1.0.0"
+  app.kubernetes.io/managed-by: kustomize
+
+# Common annotations
+commonAnnotations:
+  owner: "llm-devops-team"
+  documentation: "https://github.com/llm-devops/llm-config-manager"
+
+# Resources to deploy
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secrets.yaml
+  - pvc.yaml
+  - rbac.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - hpa.yaml
+  - pdb.yaml
+  - networkpolicy.yaml
+  - servicemonitor.yaml
+  - postgres.yaml
+  - redis.yaml
+
+# ConfigMap generator (alternative to configmap.yaml)
+# configMapGenerator:
+#   - name: llm-config-manager-config
+#     literals:
+#       - SERVER_PORT=8080
+#       - METRICS_PORT=9090
+
+# Secret generator (alternative to secrets.yaml)
+# secretGenerator:
+#   - name: llm-config-manager-secrets
+#     literals:
+#       - ENCRYPTION_KEY=changeme
+
+# Images to use (for image management)
+images:
+  - name: llm-config-manager
+    newName: llm-config-manager
+    newTag: latest
+
+# Replicas override (can be customized per environment)
+# replicas:
+#   - name: llm-config-manager
+#     count: 3
+
+# Resource patches for different environments
+# patchesStrategicMerge:
+#   - deployment-patch.yaml
+
+# Vars for cross-resource references
+# vars:
+#   - name: SERVICE_NAME
+#     objref:
+#       kind: Service
+#       name: llm-config-manager
+#       apiVersion: v1
+#     fieldref:
+#       fieldpath: metadata.name

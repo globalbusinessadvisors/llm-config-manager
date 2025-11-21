@@ -1,0 +1,102 @@
+****************************************************************************
+***   LLM Config Manager has been successfully installed!              ***
+****************************************************************************
+
+Chart Name:    {{ .Chart.Name }}
+Chart Version: {{ .Chart.Version }}
+App Version:   {{ .Chart.AppVersion }}
+Release Name:  {{ .Release.Name }}
+Namespace:     {{ .Release.Namespace }}
+
+** Please be patient while the chart is being deployed **
+
+{{- if .Values.ingress.enabled }}
+
+1. Access the application via Ingress:
+
+{{- range .Values.ingress.hosts }}
+   http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+
+{{- else if contains "LoadBalancer" .Values.service.type }}
+
+1. Get the application URL by running:
+
+   NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+
+   kubectl get svc --namespace {{ .Release.Namespace }} {{ include "llm-config-manager.fullname" . }} -w
+
+   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "llm-config-manager.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
+   echo "Application URL: http://$SERVICE_IP:{{ .Values.service.port }}"
+
+{{- else if contains "ClusterIP" .Values.service.type }}
+
+1. Access the application by port-forwarding:
+
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "llm-config-manager.fullname" . }} {{ .Values.service.port }}:{{ .Values.service.port }}
+
+   echo "Application URL: http://127.0.0.1:{{ .Values.service.port }}"
+
+{{- end }}
+
+2. Check the application health:
+
+   curl http://{{ if .Values.ingress.enabled }}{{ (index .Values.ingress.hosts 0).host }}{{ else }}127.0.0.1:{{ .Values.service.port }}{{ end }}/health
+
+3. View application logs:
+
+   kubectl logs --namespace {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "llm-config-manager.name" . }} --tail=100 -f
+
+4. Access metrics endpoint:
+
+{{- if .Values.ingress.enabled }}
+   http{{ if $.Values.ingress.tls }}s{{ end }}://{{ (index .Values.ingress.hosts 0).host }}:{{ .Values.service.metricsPort }}/metrics
+{{- else }}
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "llm-config-manager.fullname" . }} {{ .Values.service.metricsPort }}:{{ .Values.service.metricsPort }}
+   curl http://127.0.0.1:{{ .Values.service.metricsPort }}/metrics
+{{- end }}
+
+5. Monitoring dashboards:
+
+{{- if .Values.monitoring.grafana.enabled }}
+   - Grafana: Check your Grafana instance for the imported dashboards
+{{- end }}
+{{- if .Values.monitoring.prometheus.enabled }}
+   - Prometheus: Metrics are being scraped by Prometheus
+{{- end }}
+
+** SECURITY WARNINGS **
+
+{{- if eq .Values.secrets.encryptionKey "CHANGE_ME_GENERATE_WITH_OPENSSL_RAND" }}
+⚠️  WARNING: You are using the default encryption key!
+   Generate a secure key: openssl rand -base64 32
+   Update values.yaml or use --set secrets.encryptionKey=<your-key>
+{{- end }}
+
+{{- if eq .Values.postgresql.auth.password "CHANGE_ME_USE_STRONG_PASSWORD" }}
+⚠️  WARNING: You are using the default PostgreSQL password!
+   Generate a secure password and update values.yaml
+{{- end }}
+
+{{- if eq .Values.redis.auth.password "CHANGE_ME_USE_STRONG_PASSWORD" }}
+⚠️  WARNING: You are using the default Redis password!
+   Generate a secure password and update values.yaml
+{{- end }}
+
+** NEXT STEPS **
+
+1. Review and update all default passwords and secrets
+2. Configure TLS certificates for production use
+3. Set up monitoring alerts in Alertmanager
+4. Configure backup automation
+5. Review resource limits based on your workload
+6. Set up log aggregation
+7. Configure external secret management (Vault, etc.)
+
+For more information:
+  - Documentation: https://github.com/llm-devops/llm-config-manager/docs
+  - Issues: https://github.com/llm-devops/llm-config-manager/issues
+  - Support: #llm-config-support on Slack
+
+Thank you for using LLM Config Manager!
